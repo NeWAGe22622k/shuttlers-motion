@@ -209,6 +209,8 @@ SFX = {
     "flick": (sfx_flip, 0.4, 0.0),
     "blink": (sfx_blink, 0.8, 0.0),
     "pop": (lambda: B.sfx_pop(), 0.55, 0.0),
+    "softPop": (lambda: B.sfx_pop() * 0.6, 0.38, 0.0),
+    "launch": (lambda: B.sfx_whoosh(0.45, 250, 4800), 0.34, None),  # pre-roll = its own measured peak
     "glow": (lambda: B.sfx_shimmer(), 0.5, 0.0),
 }
 
@@ -393,11 +395,17 @@ def build_sfx(key):
     out = np.zeros((N, 2))
     placed = []
     for name, frames in D["sfx"].items():
-        fn, gain, pre = SFX[name]
+        fn, gain, pre0 = SFX[name]
         for fr in frames:
             x = fn()
+            pre = pre0
+            if pre is None:  # align a long swell by where its envelope actually peaks
+                mono = x if x.ndim == 1 else np.mean(x, axis=1)
+                w = smp(0.06)
+                env = np.sqrt(np.convolve(mono**2, np.ones(w) / w, mode="same"))
+                pre = int(np.argmax(env)) / SR
             add(out, x, fs(fr) - pre, gain, pan=0.12 if name == "tap" else 0.0)
-            if name in ("whoosh", "race", "frost"):
+            if name in ("whoosh", "race", "frost", "launch"):
                 B.SWELL_PEAK[name] = pre
             placed.append((name, fr, x, smp(fs(fr) - pre)))
     return out, placed
