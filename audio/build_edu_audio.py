@@ -121,6 +121,76 @@ def hum(dur):
     return x * (t / dur) ** 1.4 * 0.5
 
 
+
+# ---------------------------------------------------------------- Afro-house percussion + voices
+
+def djembe(kind="tone", pitch=1.0):
+    """Djembe hit: 'bass' (deep thump), 'tone' (open), 'slap' (bright crack)."""
+    n = smp(0.35)
+    t = np.arange(n) / SR
+    if kind == "bass":
+        f = 78 * pitch * (1 + 0.6 * np.exp(-t / 0.01))
+        x = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.16)
+    elif kind == "tone":
+        f = 230 * pitch * (1 + 0.25 * np.exp(-t / 0.008))
+        x = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.07) + 0.25 * np.sin(2 * np.pi * np.cumsum(f * 1.58) / SR) * np.exp(-t / 0.04)
+        x += B.bp(noise(n), 800, 2500) * np.exp(-t / 0.005) * 0.4
+    else:
+        x = B.bp(noise(n), 1500, 6000) * np.exp(-t / 0.012) + np.sin(2 * np.pi * 410 * pitch * t) * np.exp(-t / 0.02) * 0.4
+    return x * np.clip(t / 0.0008, 0, 1) * 0.6
+
+
+def talking_drum(base=190.0, up=1.45, dur=0.32):
+    """Talking drum: pitch squeezes up then relaxes (the drummer's armpit squeeze)."""
+    n = smp(dur)
+    t = np.arange(n) / SR
+    bend = 1 + (up - 1) * np.sin(np.pi * np.clip(t / (dur * 0.7), 0, 1))
+    f = base * bend
+    x = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.14)
+    x += B.bp(noise(n), 900, 3000) * np.exp(-t / 0.004) * 0.3
+    return x * np.clip(t / 0.001, 0, 1) * 0.55
+
+
+def tom(freq):
+    n = smp(0.4)
+    t = np.arange(n) / SR
+    f = freq * (1 + 0.5 * np.exp(-t / 0.02))
+    return (np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.18) + B.lp(noise(n), 900) * np.exp(-t / 0.01) * 0.3) * 0.6
+
+
+def chant(freq, vowel="e", dur=0.42, slide=2.0, voices=4):
+    """Group call/response chant, synthesised (vowel formants, pitch scoop, vibrato). No real voice."""
+    n = smp(dur)
+    t = np.arange(n) / SR
+    out = np.zeros(n)
+    f1, f2, f3 = FORMANTS[vowel]
+    for v in range(voices):
+        det = 2 ** ((RNG.uniform(-14, 14)) / 1200)
+        f = freq * det * 2 ** ((-slide * np.exp(-t / 0.05)) / 12) * (1 + 0.012 * np.sin(2 * np.pi * 5.3 * t + v))
+        ph = np.cumsum(f) / SR
+        g = 2 * (ph % 1) - 1
+        out += B.bp(g, f1 * 0.85, f1 * 1.15) + 0.55 * B.bp(g, f2 * 0.9, f2 * 1.1) + 0.25 * B.bp(g, f3 * 0.92, f3 * 1.08)
+    env = np.clip(t / 0.03, 0, 1) * np.clip((dur - t) / 0.12, 0, 1)
+    return out / voices * env * 0.9
+
+
+def flute(freq, dur=0.5):
+    n = smp(dur)
+    t = np.arange(n) / SR
+    vib = 1 + 0.006 * np.sin(2 * np.pi * 5.2 * t) * np.clip((t - 0.08) / 0.1, 0, 1)
+    ph = 2 * np.pi * np.cumsum(freq * vib) / SR
+    x = np.sin(ph) + 0.18 * np.sin(2 * ph) + 0.06 * np.sin(3 * ph)
+    breath = B.bp(noise(n), freq * 1.5, min(freq * 5, 12000)) * 0.12
+    env = np.clip(t / 0.06, 0, 1) * np.clip((dur - t) / 0.15, 0, 1)
+    return (x + breath) * env * 0.3
+
+
+def bass_note(midi, dur):
+    """Deep rolling bass: rounded sine + soft second harmonic, slight attack thump."""
+    m = midi - 12 if mtof(midi - 12) >= 50 else midi
+    return sub_note(mtof(m), dur)
+
+
 # ---------------------------------------------------------------- SFX
 
 def sfx_scratch():
@@ -216,67 +286,71 @@ SFX = {
 # ---------------------------------------------------------------- arrangement
 
 VIDEOS = {
-    "v1": {  # A minor, warm anthem
-        "chords": [([57, 60, 64, 65], 41), ([59, 62, 67, 71], 43), ([59, 62, 64, 67], 40), ([60, 64, 67, 71], 45)],
-        "motif": [76, None, 74, 72, None, 69, 72, None, 74, None, 76, 79, None, 76, 74, 72],
-        "vowels": "ao",
-        "log": False,
+    # Hypnotic two-chord minor vamps (2 bars each), Afro-house style.
+    "v1": {  # A minor: Am9 | Am9 | Fmaj9 | Fmaj9
+        "chords": [([60, 64, 67, 71], 45), ([60, 64, 67, 71], 45), ([57, 60, 64, 67], 41), ([57, 60, 64, 67], 41)],
+        "marimba": [69, None, 72, 76, None, 72, 74, None, 76, None, 74, 72, None, 69, 67, None],
+        "flute": [76, None, None, 79, None, 76, 74, None, 72, None, 74, None, None, 69, None, None],
+        "talk": 196.0,
     },
-    "v2": {  # C minor, driving
-        "chords": [([63, 67, 70, 74], 36), ([60, 63, 67, 68], 44), ([58, 63, 67, 70], 39), ([58, 62, 65, 70], 46)],
-        "motif": [72, None, 75, 77, None, 79, 77, None, 75, None, 72, 70, None, 72, 75, None],
-        "vowels": "eo",
-        "log": True,
+    "v2": {  # C minor: Cm9 | Cm9 | Fm9 | Fm9
+        "chords": [([63, 67, 70, 74], 36), ([63, 67, 70, 74], 36), ([60, 63, 67, 68], 41), ([60, 63, 67, 68], 41)],
+        "marimba": [72, None, 75, 79, None, 75, 77, None, 79, None, 77, 75, None, 72, 70, None],
+        "flute": [79, None, None, 82, None, 79, 77, None, 75, None, 77, None, None, 72, None, None],
+        "talk": 220.0,
     },
 }
 
 KICK = [0, 4, 8, 12]
-CLAP = [4, 12]
-RIM = [3, 7, 10, 14]
-CONGA = [(2, 0), (6, 1), (7, 1), (10, 0), (11, 1), (14, 1), (15, 0)]  # (step, hi?)
+SNAP = [4, 12]
+CLAVE = [0, 3, 6, 10, 12]  # son clave (3-2) on the 16th grid
+DJ_TONE = [2, 5, 10, 13]
+DJ_SLAP = [7, 15]
+CONGA = [(1, 1), (6, 0), (9, 1), (11, 1), (14, 0)]  # (step, hi?) answers the djembe
 HAT = [2, 6, 10, 14]
-SUB = [0, 3, 6, 10, 12]
-LOG = [7, 13]
-RHODES = [0, 6, 11]
+BASS = [(2, 0), (3, 0), (6, 7), (7, 0), (10, 0), (11, 12), (14, 7)]  # rolling offbeat bass (step, interval)
 
 
 def st(bar, step):
     return bar * BAR + step * STEP + (SWING - 0.5) * 2 * STEP * (step % 2)
 
 
+PERC = {"kick", "snap", "clave", "djembe", "conga", "shaker", "hat", "bass", "pad", "keys"}
+
+
 def layers_v1(fr, S):
     """Which layers play at frame fr (V1)."""
     if fr < S["drop"]:
-        return {"hum", "pad"}
+        return {"hum", "pad", "shaker_soft"}
     if S["silence"][0] <= fr < S["silence"][1]:
         return set()
     if S["strip"][0] <= fr < S["strip"][1]:
-        return {"kick", "sub", "pad", "shaker"}
+        return {"kick", "bass", "pad", "djembe", "shaker"}
     if fr >= S["end"][0]:
-        return {"kick", "sub", "pad", "rhodes", "shaker", "hat"} if fr < S["button"] else set()
-    base = {"kick", "clap", "rim", "conga", "shaker", "hat", "sub", "rhodes", "pad"}
+        return {"kick", "bass", "pad", "djembe", "conga", "shaker", "hat", "keys"} if fr < S["button"] else set()
+    base = set(PERC) | {"chant"}
     if fr >= 120:
-        base |= {"kalimba"}
+        base |= {"marimba", "talk"}
     if S["grooveB"][0] <= fr < S["grooveB"][1] or S["slam"][0] <= fr < S["slam"][1]:
-        base |= {"vox"}
+        base |= {"flute", "toms"}
     return base
 
 
 def layers_v2(fr, S):
     if fr < S["drop"]:
-        return {"pad", "hum"}
+        return {"pad", "hum", "shaker_soft"}
     for a, b in (S["blackout"], S["halt"]):
         if a <= fr < b:
             return set()
     if fr >= S["end"][0]:
-        return {"kick", "sub", "pad", "rhodes", "shaker", "hat", "conga"} if fr < S["button"] else set()
-    base = {"kick", "clap", "rim", "conga", "shaker", "hat", "sub", "rhodes", "pad"}
+        return {"kick", "bass", "pad", "djembe", "conga", "shaker", "hat", "keys"} if fr < S["button"] else set()
+    base = set(PERC) | {"marimba"}
     if fr >= 180:
-        base |= {"kalimba"}
+        base |= {"talk"}
     if fr >= 360:
-        base |= {"log"}
+        base |= {"flute"}
     if fr >= S["kickBack"]:
-        base |= {"vox", "log"}
+        base |= {"chant", "toms"}
     return base
 
 
@@ -293,12 +367,12 @@ def build_music(key):
     bars = int(np.ceil(E["duration"] / 60))
     for bar in range(bars):
         notes, root = V["chords"][bar % 4]
-        rootf = mtof(root)
         bar_fr = bar * 60
         L = layers(bar_fr + 1, S)
-        if "pad" in L:
-            gain = 0.32 if bar_fr < S["drop"] else 0.4
-            add(tonal, B.pad_chord(notes, BAR + 0.3), bar * BAR, gain)
+        if "pad" in L and bar % 2 == 0:
+            gain = 0.3 if bar_fr < S["drop"] else 0.36
+            add(tonal, B.pad_chord(notes, BAR * 2 + 0.3), bar * BAR, gain)
+            add(send, B.pad_chord(notes, BAR * 2), bar * BAR, 0.12)
         for step in range(16):
             t = st(bar, step)
             fr = t * FPS
@@ -306,38 +380,59 @@ def build_music(key):
             if not L:
                 continue
             if "kick" in L and step in KICK:
-                add(drums, B.kick(), t, 0.85)
-            if "clap" in L and step in CLAP:
-                add(drums, B.clap(), t, 0.32)
-            if "rim" in L and step in RIM:
-                add(drums, rim(), t, 0.35, pan=-0.3)
+                add(drums, B.kick(), t, 0.78)
+            if "snap" in L and step in SNAP:
+                add(drums, B.clap(), t, 0.2)
+            if "clave" in L and step in CLAVE:
+                add(drums, rim(), t, 0.33, pan=-0.35)
+            if "djembe" in L:
+                if step in DJ_TONE:
+                    add(drums, djembe("tone", 1.0 if step != 13 else 1.12), t, 0.5, pan=0.2)
+                if step in DJ_SLAP:
+                    add(drums, djembe("slap"), t, 0.42, pan=0.3)
+                if step == 8 and bar % 2 == 1:
+                    add(drums, djembe("bass"), t, 0.45)
             if "conga" in L:
-                for s, hi in CONGA:
-                    if s == step:
-                        add(drums, conga(mtof(root + (24 if hi else 19)), 0.5 if hi else 0.3), t, 0.45, pan=0.35 if hi else -0.2)
-            if "shaker" in L:
-                add(drums, B.shaker([1.0, 0.4, 0.7, 0.4][step % 4]), t, 0.14, pan=0.25)
+                for s_, hi in CONGA:
+                    if s_ == step:
+                        add(drums, conga(mtof(root + (26 if hi else 21)), 0.5 if hi else 0.3), t, 0.4, pan=-0.4 if hi else -0.15)
+            if "shaker" in L or ("shaker_soft" in L and step % 2 == 0):
+                add(drums, B.shaker([1.0, 0.45, 0.75, 0.45][step % 4]), t, 0.15 if "shaker" in L else 0.08, pan=0.3)
             if "hat" in L and step in HAT:
-                add(drums, open_hat(), t, 0.16, pan=-0.15)
-            if "sub" in L and step in SUB:
-                m = root - 12 + (12 if step == 12 and bar % 2 else 0)
-                add(drums, sub_note(mtof(m + 12), STEP * 2.6), t, 0.7)
-            if "log" in L and V["log"] and step in LOG and bar % 2 == 1:
-                add(drums, B.log_drum(rootf), t, 0.32)
-            if "rhodes" in L and step in RHODES:
+                add(drums, open_hat(), t, 0.14, pan=-0.2)
+            if "talk" in L and bar % 2 == 1 and step in (11, 14):
+                add(drums, talking_drum(V["talk"] * (1.0 if step == 11 else 0.84)), t, 0.45, pan=0.45)
+            if "toms" in L and bar % 4 == 3 and step >= 12:
+                add(drums, tom(mtof(root + 12) * [1.5, 1.33, 1.12, 1.0][step - 12]), t, 0.5, pan=0.3 - 0.2 * (step - 12))
+            if "bass" in L:
+                for s_, iv in BASS:
+                    if s_ == step:
+                        add(drums, bass_note(root + iv, STEP * 1.8), t, 0.75)
+            if "keys" in L and step == 0 and bar % 2 == 0:
                 ch = np.sum([rhodes(mtof(m)) for m in notes], axis=0)
-                add(tonal, ch, t, 0.45 if step == 0 else 0.3, pan=-0.1)
-                add(send, ch, t, 0.2)
-            if "kalimba" in L and step % 2 == 0:
-                m = V["motif"][(bar % 2) * 8 + step // 2]
+                add(tonal, ch, t, 0.3, pan=-0.1)
+                add(send, ch, t, 0.25)
+            if "marimba" in L and step % 2 == 0:
+                m = V["marimba"][(bar % 2) * 8 + step // 2]
                 if m is not None:
                     k = kalimba(mtof(m))
-                    add(tonal, k, t, 0.42, pan=0.3 if step % 4 else -0.3)
-                    add(send, k, t, 0.35)
-            if "vox" in L and step in (6, 14) and bar % 2 == 0:
-                v = vox(mtof(notes[2] + (12 if step == 14 else 0)), V["vowels"][step // 8])
-                add(tonal, v, t, 0.3, pan=0.2)
-                add(send, v, t, 0.4)
+                    add(tonal, k, t, 0.36, pan=0.35 if step % 4 else -0.25)
+                    add(send, k, t, 0.3)
+            if "flute" in L and step % 2 == 0 and bar % 4 >= 2:
+                m = V["flute"][(bar % 2) * 8 + step // 2]
+                if m is not None:
+                    fl = flute(mtof(m), STEP * 3.2)
+                    add(tonal, fl, t, 0.42, pan=-0.3)
+                    add(send, fl, t, 0.55)
+            if "chant" in L:
+                if step == 0 and bar % 2 == 0:  # call
+                    c = chant(mtof(notes[1]), "e", 0.38, 3.0)
+                    add(tonal, c, t, 0.45, pan=-0.15)
+                    add(send, c, t, 0.6)
+                if step == 8 and bar % 2 == 1:  # response
+                    c = chant(mtof(notes[0]), "o", 0.5, 2.0)
+                    add(tonal, c, t, 0.4, pan=0.2)
+                    add(send, c, t, 0.6)
     # intro hum + riser into the drop
     add(hits, hum(fs(S["drop"])), 0.0, 0.5)
     add(hits, B.riser(fs(S["drop"] - 10)), fs(10), 0.28)
