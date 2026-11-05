@@ -1,0 +1,8 @@
+# Renders for review
+
+Finished videos for review and approval. Everything here is rebuilt from the source (see the main README);
+only review/approved cuts are kept here so the repo stays small.
+
+| File | Video | Format | Length |
+|---|---|---|---|
+| `edu1-how-pod-works-9x16.mp4` | Education Video 1: How Pod works | 9:16 (1080×1920) | 30 s |
