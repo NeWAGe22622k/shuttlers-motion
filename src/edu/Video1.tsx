@@ -5,7 +5,9 @@ import { T } from "../config/time";
 import { assetExists, Grain } from "../components/core";
 import { mix, sp, speedBlur, tw } from "../components/motion";
 import { EDU, END_LINE, EduCard, V1_ART } from "./content";
-import { BRANCH_ENDS, Calendar, Clock, FareTagSlice, Frost, Gate, MapRace, MirrorPilot, PodSide, Rain, SEATS, SeatMap, Streaks, Traffic, Vent, Pin } from "./art";
+import { BRANCH_ENDS, Calendar, Clock, FareTagSlice, Frost, Gate, MapRace, MirrorPilot, Rain, SEATS, SeatMap, Streaks, Traffic, Vent, Pin } from "./art";
+import { PodIcon } from "./PodIcon";
+import { FleetCar } from "../components/core";
 import { Arrow, CardBG, HBlur, SMark, Statement, dropStyle, landShake, liftStyle } from "./kit";
 import { BLACK, FORMATS, Fmt, POPPINS, pairColours } from "./theme";
 
@@ -62,7 +64,7 @@ const scenes: ((c: Ctx) => React.ReactNode)[] = [
         <Headline f={f} card={card} fg={fg} bg={bg} F={F} fmt="9x16" />
         <HBlur id="v1c1" amount={blur}>
           <Art F={F} dx={x(f)} dy={40 + bounce}>
-            <PodSide id="c1" width={900} fg={fg} bg={bg} lights={lights} door={door} wheel={x(f) * 0.9} seatGlow={door} />
+            <PodIcon id="c1" width={920} lights={lights} door={door} seatGlow={door} />
           </Art>
         </HBlur>
       </AbsoluteFill>
@@ -144,7 +146,7 @@ const scenes: ((c: Ctx) => React.ReactNode)[] = [
             <Streaks color={fg} p={tw(f, 236, 242)} width={500} height={170} />
             <HBlur id="v1c4" amount={blur}>
               <div style={{ transform: `translateX(${lx}px)` }}>
-                <PodSide id="c4" width={720} fg={fg} bg={bg} lights={1} wheel={lx * 1.2} style={{ marginLeft: 120, marginTop: -60 }} />
+                <PodIcon id="c4" width={720} lights={1} style={{ marginLeft: 120, marginTop: -40 }} />
               </div>
             </HBlur>
           </div>
@@ -167,7 +169,7 @@ const scenes: ((c: Ctx) => React.ReactNode)[] = [
         <Art F={F} dx={-130} dy={310}>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 24, opacity: park, transform: `translateX(${(1 - park) * 120}px)` }}>
             <Gate width={200} fg={fg} bg={bg} />
-            <PodSide id="c5" width={440} fg={fg} bg={bg} />
+            <PodIcon id="c5" width={470} />
           </div>
         </Art>
       </>
@@ -303,11 +305,9 @@ const scenes: ((c: Ctx) => React.ReactNode)[] = [
       <div style={{ position: "absolute", left: F.pad, right: F.pad, top: F.H * 0.3 }}>
         <Statement f={f} lines={card.lines} at={card.at + 1} size={F.textSize * 1.2} color={fg} align="center" />
       </div>
-      <Art F={F} dy={0}>
-        <div style={{ transform: `scale(${mix(0.9, 1, sp(f, 781, { damping: 20, stiffness: 140 }))}) translateY(${Math.sin((f - 780) / 10) * 4}px)` }}>
-          <PodSide id="c12" width={880} fg={fg} bg={bg} lights={1} />
-        </div>
-      </Art>
+      <div style={{ position: "absolute", inset: 0, transform: `scale(${mix(0.92, 1, sp(f, 781, { damping: 20, stiffness: 140 }))})`, transformOrigin: "50% 62%" }}>
+        <FleetCar id="v1hero" src="vehicles/fleet-c-34.png" w={F.W * 0.86} aspect={576 / 1033} x={F.W / 2} ground={F.art.cy + 260 * F.art.s + Math.sin((f - 780) / 10) * 3} />
+      </div>
     </>
   ),
   // 0:28 Shuttlers Pod. / Open Shuttlers → tap Pod — end frame with the S mark; the track ends on a button
