@@ -75,3 +75,9 @@ export const EDU: Record<"v1" | "v2", { title: string; caption: string; cards: E
     ],
   },
 };
+
+// Illustrative labels inside the art (not claims): the calendar that "flips to tomorrow morning".
+export const V1_ART = {
+  calendarTop: ["TODAY", "TOMORROW"],
+  calendarBody: ["NOW", "7:00 AM"],
+};

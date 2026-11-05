@@ -1,21 +1,13 @@
 import React from "react";
 import { AbsoluteFill, Audio, staticFile, useCurrentFrame } from "remotion";
-import { loadFont } from "@remotion/fonts";
-import { getInfo } from "@remotion/google-fonts/Poppins";
 import { EASE } from "../config/brand";
 import { T } from "../config/time";
 import { assetExists } from "../components/core";
 import { mix, sp, tw } from "../components/motion";
 import { EDU, END_LINE, EduCard, Seg } from "./content";
 
-// Poppins (brief), vendored woff2: the renderer here can't reach fonts.gstatic.com.
-export const POPPINS = "Poppins";
-const ranges = getInfo().unicodeRanges as Record<string, string>;
-for (const w of ["400", "500", "600", "700", "800"]) {
-  for (const s of ["latin", "latin-ext"]) {
-    loadFont({ family: POPPINS, url: staticFile(`fonts/Poppins-${w}-${s}.woff2`), weight: w, style: "normal", unicodeRange: ranges[s], format: "woff2" });
-  }
-}
+export { POPPINS } from "./theme";
+import { POPPINS } from "./theme";
 
 export const GREEN = "#20E682";
 export const BLACK = "#000000";
