@@ -1,0 +1,810 @@
+{
+  "_doc": "Single source of truth for every frame number. 30fps, BPM 120 => BEAT = 30*60/120 = 15f, BAR = 60f. Hero frames are absolute. Read by src/ (TS) and audio/build_audio.py.",
+  "fps": 30,
+  "bpm": 120,
+  "beat": 15,
+  "bar": 60,
+  "hero": {
+    "duration": 960,
+    "s1": {
+      "start": 0,
+      "end": 90,
+      "wordsStart": 6,
+      "wordStep": 6,
+      "safeHit": 50,
+      "onDemandHit": 60,
+      "replyIn": 66,
+      "replyEnd": 86,
+      "silence": 86
+    },
+    "s2": {
+      "start": 90,
+      "end": 165,
+      "shrink": 90,
+      "shrinkDur": 12,
+      "iconLand": 102,
+      "glint": 102,
+      "glintDur": 10,
+      "answer": 105,
+      "tap": 135,
+      "zoomStart": 138,
+      "zoomEnd": 165
+    },
+    "s3": {
+      "start": 165,
+      "end": 240,
+      "pullback": 165,
+      "pullbackEnd": 183,
+      "dailyHi": 183,
+      "rentHi": 190,
+      "podLift": 197,
+      "caption": 205,
+      "podReturn": 222,
+      "tap": 228,
+      "push": 230,
+      "pushEnd": 240
+    },
+    "s4": {
+      "start": 240,
+      "end": 345,
+      "gps": 244,
+      "currentIn": 244,
+      "currentInEnd": 256,
+      "caption0": 245,
+      "tapDest": 258,
+      "keys": [
+        270,
+        275,
+        281,
+        286,
+        291,
+        297,
+        302,
+        307,
+        313
+      ],
+      "typingEnd": 318,
+      "caption1": 300,
+      "tapResult": 322,
+      "loading": 325,
+      "loadingEnd": 333,
+      "push": 333,
+      "pushEnd": 345
+    },
+    "s5": {
+      "start": 345,
+      "end": 435,
+      "routeDraw": 345,
+      "routeDrawEnd": 375,
+      "markerPickup": 350,
+      "markerDrop": 368,
+      "distanceChip": 372,
+      "skeleton": 348,
+      "resolve": 385,
+      "resolveStagger": 4,
+      "select": 402,
+      "lift": 405,
+      "carIn": 408,
+      "liftReturn": 425,
+      "tap": 428,
+      "fareRise": 430
+    },
+    "s6": {
+      "start": 435,
+      "end": 585,
+      "sheetRise": 435,
+      "sheetRiseEnd": 460,
+      "maxPayRoll": 450,
+      "cameraShift": 465,
+      "cameraShiftEnd": 480,
+      "chart": 480,
+      "chartDrawEnd": 520,
+      "title": 490,
+      "sub": 515,
+      "lock": 540,
+      "chartOut": 548,
+      "rowLift": 548,
+      "maxLine": 554,
+      "rowReturn": 570,
+      "tapPay": 578
+    },
+    "s7": {
+      "start": 585,
+      "end": 675,
+      "sheetUp": 585,
+      "sheetUpEnd": 615,
+      "caption": 590,
+      "tapCard": 600,
+      "tapContinue": 608,
+      "success": 615,
+      "checkDraw": 8,
+      "booked": 630,
+      "popper": 630,
+      "confettiLife": 40
+    },
+    "s8": {
+      "start": 675,
+      "end": 780,
+      "finding": 675,
+      "radarStep": 12,
+      "accepted": 705,
+      "carDrive": 715,
+      "fleetIn": 715,
+      "badgeLift": 725,
+      "captions": [
+        733,
+        739,
+        745
+      ],
+      "wipe": 765,
+      "wipeEnd": 780
+    },
+    "s9": {
+      "start": 780,
+      "end": 840,
+      "flashes": [
+        780,
+        795,
+        810,
+        825
+      ],
+      "wipeDur": 8,
+      "whipDur": 12
+    },
+    "s10": {
+      "start": 840,
+      "end": 960,
+      "icon": 840,
+      "lockup": 850,
+      "tagline": 862,
+      "pills": 880,
+      "cta": 895
+    }
+  },
+  "cutdown": {
+    "duration": 450,
+    "_doc": "Each segment plays hero scenes with a linear time remap: cut frame c in [c0,c1) shows hero frame h0 + (c-c0)*(h1-h0)/(c1-c0).",
+    "segments": [
+      {
+        "scene": "s1",
+        "cut": [
+          0,
+          45
+        ],
+        "hero": [
+          0,
+          90
+        ]
+      },
+      {
+        "scene": "s2",
+        "cut": [
+          45,
+          92
+        ],
+        "hero": [
+          90,
+          137
+        ],
+        "pushOutAt": 125
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          80,
+          135
+        ],
+        "hero": [
+          173,
+          228
+        ],
+        "phoneEntry": "push"
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          135,
+          150
+        ],
+        "hero": [
+          318,
+          345
+        ]
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          150,
+          210
+        ],
+        "hero": [
+          345,
+          435
+        ]
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          210,
+          270
+        ],
+        "hero": [
+          435,
+          540
+        ]
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          270,
+          300
+        ],
+        "hero": [
+          540,
+          585
+        ]
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          300,
+          345
+        ],
+        "hero": [
+          630,
+          675
+        ]
+      },
+      {
+        "scene": "phone",
+        "cut": [
+          345,
+          390
+        ],
+        "hero": [
+          700,
+          765
+        ]
+      },
+      {
+        "scene": "s10",
+        "cut": [
+          390,
+          430
+        ],
+        "hero": [
+          840,
+          900
+        ]
+      },
+      {
+        "scene": "s10",
+        "cut": [
+          430,
+          450
+        ],
+        "hero": [
+          900,
+          930
+        ]
+      }
+    ]
+  },
+  "audio": {
+    "hero": {
+      "intro": [
+        0,
+        90
+      ],
+      "wordTicks": "s1.words",
+      "riser": [
+        60,
+        86
+      ],
+      "silence": [
+        86,
+        90
+      ],
+      "drop": 90,
+      "groove": [
+        [
+          90,
+          435
+        ],
+        [
+          555,
+          780
+        ]
+      ],
+      "fills": [
+        165,
+        240,
+        345,
+        435
+      ],
+      "breakdown": [
+        435,
+        480
+      ],
+      "build": [
+        480,
+        540
+      ],
+      "lock": 540,
+      "regroove": 555,
+      "confetti": 630,
+      "flashHits": [
+        780,
+        795,
+        810,
+        825
+      ],
+      "flashFiltered": [
+        780,
+        840
+      ],
+      "finalHit": 840,
+      "outro": [
+        840,
+        960
+      ],
+      "drumsOut": 870,
+      "fadeFrames": 20
+    },
+    "cutdown": {
+      "intro": [
+        0,
+        45
+      ],
+      "riser": [
+        25,
+        43
+      ],
+      "silence": [
+        43,
+        45
+      ],
+      "drop": 45,
+      "groove": [
+        [
+          45,
+          210
+        ],
+        [
+          270,
+          390
+        ]
+      ],
+      "fills": [
+        90,
+        135,
+        150,
+        210
+      ],
+      "breakdown": [
+        210,
+        225
+      ],
+      "build": [
+        225,
+        270
+      ],
+      "lock": 270,
+      "regroove": 270,
+      "confetti": 300,
+      "flashHits": [],
+      "flashFiltered": [],
+      "finalHit": 390,
+      "outro": [
+        390,
+        450
+      ],
+      "drumsOut": 405,
+      "fadeFrames": 20
+    }
+  },
+  "sfx": {
+    "_doc": "Hero cue frames. Cutdown cues are derived from these through cutdown.segments.",
+    "tap": [
+      135,
+      228,
+      258,
+      322,
+      428,
+      578,
+      600,
+      608
+    ],
+    "pop": [
+      50,
+      60,
+      66,
+      102,
+      197,
+      350,
+      368,
+      372,
+      540,
+      725,
+      850,
+      880
+    ],
+    "whoosh": [
+      90,
+      138,
+      165,
+      197,
+      222,
+      230,
+      333,
+      405,
+      425,
+      465,
+      548,
+      570,
+      585,
+      725,
+      765
+    ],
+    "shimmer": [
+      102,
+      840
+    ],
+    "gps": [
+      244
+    ],
+    "loader": [
+      348,
+      385
+    ],
+    "select": [
+      402
+    ],
+    "lock": [
+      540
+    ],
+    "success": [
+      615
+    ],
+    "popper": [
+      630
+    ],
+    "car": [
+      [
+        408,
+        0.6
+      ],
+      [
+        715,
+        1.0
+      ]
+    ],
+    "carBy": [
+      780,
+      795,
+      810
+    ],
+    "whip": [
+      780,
+      795,
+      810,
+      825
+    ],
+    "duck": [
+      90,
+      540,
+      630,
+      780,
+      795,
+      810,
+      825,
+      840
+    ]
+  },
+  "edu": {
+    "_doc": "Education videos (brief: 'Shuttlers Pod: Education Videos'). 30fps, 120bpm: beat 15f, bar 60f; each 2s brief row = 1 bar. Frames absolute per video.",
+    "duration": 900,
+    "v1": {
+      "title": "How Pod works",
+      "key": "A minor",
+      "cards": [
+        [
+          0,
+          "The wait is over."
+        ],
+        [
+          60,
+          "Your Pod is here."
+        ],
+        [
+          120,
+          "Doorstep to destination."
+        ],
+        [
+          165,
+          "Wherever you go."
+        ],
+        [
+          210,
+          "Pod Now. It's go time."
+        ],
+        [
+          270,
+          "Pod Later. It's a date."
+        ],
+        [
+          330,
+          "Pod Solo. It's a party for one."
+        ],
+        [
+          390,
+          "Pod Shared. It's a party for everyone."
+        ],
+        [
+          450,
+          "Cool fare."
+        ],
+        [
+          510,
+          "Cool car."
+        ],
+        [
+          570,
+          "Oh, and cool Pilot."
+        ],
+        [
+          660,
+          "It's safe. It's set. It's smooth."
+        ],
+        [
+          780,
+          "It's Pod."
+        ],
+        [
+          840,
+          "Shuttlers Pod. / Open Shuttlers → tap Pod"
+        ]
+      ],
+      "sections": {
+        "intro": [
+          0,
+          60
+        ],
+        "drop": 60,
+        "grooveA": [
+          60,
+          330
+        ],
+        "grooveB": [
+          330,
+          570
+        ],
+        "scratch": 570,
+        "silence": [
+          570,
+          660
+        ],
+        "slam": [
+          660,
+          780
+        ],
+        "strip": [
+          780,
+          840
+        ],
+        "end": [
+          840,
+          900
+        ],
+        "button": 870
+      },
+      "wordHits": [
+        660,
+        675,
+        690,
+        705,
+        720,
+        735
+      ],
+      "sfx": {
+        "whoosh": [
+          120,
+          165,
+          210,
+          270,
+          330,
+          390,
+          450,
+          510,
+          780,
+          840
+        ],
+        "pin": [
+          126
+        ],
+        "race": [
+          135
+        ],
+        "clock": [
+          210
+        ],
+        "calendar": [
+          270
+        ],
+        "seat": [
+          330
+        ],
+        "seatsFill": [
+          390,
+          397,
+          404,
+          411
+        ],
+        "fareSnap": [
+          405
+        ],
+        "frost": [
+          510
+        ],
+        "scratch": [
+          570
+        ],
+        "door": [
+          75
+        ],
+        "nod": [
+          615
+        ],
+        "tap": []
+      }
+    },
+    "v2": {
+      "title": "How to book Pod Solo (Pod Now)",
+      "key": "C minor",
+      "cards": [
+        [
+          0,
+          "Let's get you moving."
+        ],
+        [
+          60,
+          "Like, right now."
+        ],
+        [
+          120,
+          "Pod Solo."
+        ],
+        [
+          150,
+          "Here's how."
+        ],
+        [
+          180,
+          "1. Open Shuttlers. Tap Pod."
+        ],
+        [
+          270,
+          "2. Set your destination."
+        ],
+        [
+          360,
+          "3. Choose Pod Solo."
+        ],
+        [
+          450,
+          "4. Pay your way."
+        ],
+        [
+          510,
+          "Blink."
+        ],
+        [
+          570,
+          "And your Pod is here."
+        ],
+        [
+          630,
+          "All yours."
+        ],
+        [
+          690,
+          "Catch a call. Catch a nap. Catch your breath."
+        ],
+        [
+          780,
+          "Pod Solo."
+        ],
+        [
+          840,
+          "Pod Now. (End frame: Safe. Set. Smooth.)"
+        ]
+      ],
+      "sections": {
+        "intro": [
+          0,
+          60
+        ],
+        "drop": 60,
+        "groove": [
+          60,
+          540
+        ],
+        "blackout": [
+          540,
+          555
+        ],
+        "grooveTail": [
+          555,
+          570
+        ],
+        "halt": [
+          570,
+          630
+        ],
+        "kickBack": 630,
+        "grooveC": [
+          630,
+          840
+        ],
+        "end": [
+          840,
+          900
+        ],
+        "button": 870
+      },
+      "wordHits": [
+        60,
+        75,
+        90
+      ],
+      "sfx": {
+        "clockTicks": [
+          0,
+          15,
+          30,
+          45
+        ],
+        "whoosh": [
+          120,
+          150,
+          180,
+          270,
+          360,
+          450,
+          780,
+          840
+        ],
+        "tap": [
+          210,
+          390,
+          405,
+          495
+        ],
+        "pin": [
+          285
+        ],
+        "flick": [
+          450,
+          458,
+          466,
+          474,
+          482
+        ],
+        "blink": [
+          525
+        ],
+        "door": [
+          600
+        ],
+        "pop": [
+          690,
+          720,
+          750
+        ],
+        "glow": [
+          640
+        ]
+      }
+    }
+  }
+}
