@@ -99,9 +99,10 @@ export const SeatMap: React.FC<
     lit?: number[]; // 0..1 fill per passenger seat
     outline?: number; // opacity of the empty seat outlines
     glow?: number;
+    carGlow?: number; // 0..1 the whole car fills and glows around the seat
     style?: React.CSSProperties;
   }
-> = ({ width, fg, bg, stretch = 1, solo, lit = [0, 0, 0], outline = 1, glow = 0, style }) => {
+> = ({ width, fg, bg, stretch = 1, solo, lit = [0, 0, 0], outline = 1, glow = 0, carGlow = 0, style }) => {
   const focus = solo !== undefined ? SEATS[solo] : { x: 126, y: 240 };
   const s = mix(0.42, 1, stretch);
   const cx = mix(focus.x + 24, 150, stretch);
@@ -109,7 +110,7 @@ export const SeatMap: React.FC<
   return (
     <svg width={width} height={(width * 520) / 300} viewBox="0 0 300 520" style={{ overflow: "visible", display: "block", ...style }}>
       <g transform={`translate(${cx} ${cy}) scale(${s}) translate(-150 -260)`}>
-        <rect x={30} y={20} width={240} height={480} rx={96} fill="none" stroke={fg} strokeWidth={10 / s} />
+        <rect x={30} y={20} width={240} height={480} rx={96} fill={fg} fillOpacity={0.28 * carGlow} stroke={fg} strokeWidth={10 / s} style={carGlow > 0 ? { filter: `drop-shadow(0 0 ${40 * carGlow}px ${fg})` } : undefined} />
         <path d="M66 120 Q150 84 234 120" fill="none" stroke={fg} strokeWidth={8 / s} />
         <path d="M76 430 Q150 452 224 430" fill="none" stroke={fg} strokeWidth={6 / s} />
         {[
@@ -378,3 +379,113 @@ export const Streaks: React.FC<{ color: string; p: number; width: number; height
 
 export const ease = EASE;
 export { tw };
+
+
+/* ------------------------------------------------------------------ Video 2 pieces */
+
+/** Split-flap clock: each changed digit flips over (p 0..1). */
+export const FlipClock: React.FC<C & { from: string; to: string; p: number; size: number }> = ({ from, to, p, size, fg, bg }) => {
+  const cw = size * 0.62;
+  const ch = size;
+  return (
+    <div style={{ display: "flex", gap: size * 0.06, fontFamily: POPPINS, fontWeight: 700, alignItems: "center" }}>
+      {to.split("").map((c, i) => {
+        if (c === ":") return <div key={i} style={{ fontSize: size * 0.7, color: fg, width: size * 0.22, textAlign: "center", lineHeight: 1 }}>:</div>;
+        const a = from[i];
+        const flips = a !== c;
+        const q = flips ? p : 1;
+        const tile = (d: string, extra: React.CSSProperties = {}) => (
+          <div style={{ position: "absolute", inset: 0, borderRadius: size * 0.1, background: fg, color: bg, fontSize: size * 0.78, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, ...extra }}>{d}</div>
+        );
+        return (
+          <div key={i} style={{ position: "relative", width: cw, height: ch, perspective: 900 }}>
+            {tile(q >= 1 ? c : a)}
+            {flips && q > 0 && q < 1 ? (
+              <>
+                {tile(c, { clipPath: "inset(0 0 50% 0)" })}
+                <div style={{ position: "absolute", inset: 0, transformOrigin: "50% 50%", transform: `rotateX(${-q * 180}deg)`, backfaceVisibility: "hidden" }}>{tile(a, { clipPath: "inset(0 0 50% 0)" })}</div>
+              </>
+            ) : null}
+            <div style={{ position: "absolute", left: 0, right: 0, top: ch / 2 - 2, height: 4, background: bg, opacity: 0.6 }} />
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+/** Big eye that blinks (lid 0 open → 1 closed). */
+export const Eye: React.FC<C & { size: number; lid: number }> = ({ size, lid, fg, bg }) => (
+  <svg width={size} height={size * 0.6} viewBox="0 0 300 180" style={{ display: "block", overflow: "visible" }}>
+    <g transform={`translate(0 90) scale(1 ${Math.max(0.04, 1 - lid)}) translate(0 -90)`}>
+      <path d="M10 90 Q150 -20 290 90 Q150 200 10 90 Z" fill={fg} />
+      <circle cx={150} cy={90} r={46} fill={bg} />
+      <circle cx={150} cy={90} r={22} fill={fg} />
+      <circle cx={166} cy={74} r={8} fill={bg} />
+    </g>
+    {lid > 0.6 ? <path d="M10 90 Q150 140 290 90" fill="none" stroke={fg} strokeWidth={14} strokeLinecap="round" /> : null}
+  </svg>
+);
+
+/** Phone handset (Catch a call). */
+export const CallIcon: React.FC<C & { size: number; t: number }> = ({ size, fg, t }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: "block", overflow: "visible" }}>
+    <g transform={`rotate(${Math.sin(t / 2) * 6} 50 50)`}>
+      <path d="M30 14 C24 14 16 20 16 30 C16 60 40 84 70 84 C80 84 86 76 86 70 L86 62 C86 58 83 56 80 55 L66 51 C62 50 59 52 57 55 L54 60 C44 56 38 50 34 40 L39 37 C42 35 44 32 43 28 L39 18 C38 15 36 14 32 14 Z" fill={fg} />
+    </g>
+    {[0, 1].map((i) => (
+      <path key={i} d={`M${62 + i * 9} ${30 - i * 9} A ${14 + i * 12} ${14 + i * 12} 0 0 1 ${78 + i * 12} ${46 - i * 4}`} fill="none" stroke={fg} strokeWidth={6} strokeLinecap="round" opacity={0.5 + 0.5 * Math.sin(t / 3 - i)} />
+    ))}
+  </svg>
+);
+
+/** Sleeping face with drifting z's (Catch a nap). */
+export const SleepIcon: React.FC<C & { size: number; t: number }> = ({ size, fg, bg, t }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: "block", overflow: "visible" }}>
+    <circle cx={44} cy={56} r={38} fill={fg} />
+    <path d="M24 54 Q32 62 40 54 M48 54 Q56 62 64 54" fill="none" stroke={bg} strokeWidth={5} strokeLinecap="round" />
+    <path d="M36 72 Q44 76 52 72" fill="none" stroke={bg} strokeWidth={5} strokeLinecap="round" />
+    {[0, 1, 2].map((i) => {
+      const q = ((t / 18 + i / 3) % 1 + 1) % 1;
+      return (
+        <text key={i} x={74 + q * 18} y={34 - q * 30} fontFamily={POPPINS} fontWeight={800} fontSize={14 + i * 4} fill={fg} opacity={1 - q}>
+          z
+        </text>
+      );
+    })}
+  </svg>
+);
+
+/** Calm exhale: soft breath curls drifting out (Catch your breath). */
+export const BreathIcon: React.FC<C & { size: number; t: number }> = ({ size, fg, t }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: "block", overflow: "visible" }}>
+    {[0, 1, 2].map((i) => {
+      const q = ((t / 24 + i / 3) % 1 + 1) % 1;
+      return (
+        <path
+          key={i}
+          d={`M${10 + q * 20} ${34 + i * 16} H${56 + q * 20} a12 12 0 1 0 -12 -12`}
+          fill="none"
+          stroke={fg}
+          strokeWidth={7}
+          strokeLinecap="round"
+          opacity={0.35 + 0.65 * Math.sin(Math.PI * q)}
+        />
+      );
+    })}
+  </svg>
+);
+
+export const StreetTexture: React.FC<{ color: string; size: number; dx: number }> = ({ color, size, dx }) => (
+  <svg width={size} height={size} viewBox="0 0 900 900" style={{ display: "block", overflow: "visible" }}>
+    <g transform={`translate(${dx} 0)`} stroke={color} strokeWidth={2} fill="none" opacity={0.18}>
+      {[-900, 0, 900].map((o) => (
+        <g key={o} transform={`translate(${o} 0)`}>
+          {STREETS.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
+      ))}
+    </g>
+  </svg>
+);

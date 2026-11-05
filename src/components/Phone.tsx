@@ -5,11 +5,11 @@ import { content } from "../config/content";
 const { screenW: SW, screenH: SH, scale: PS, bezel: BZ, radius: PR } = LAYOUT.phone;
 
 /** Generic status bar glyphs (signal, wifi, battery). */
-export const StatusBar: React.FC<{ dark?: boolean }> = ({ dark = false }) => {
+export const StatusBar: React.FC<{ dark?: boolean; time?: string }> = ({ dark = false, time = content.home.time }) => {
   const col = dark ? "#fff" : C.ink;
   return (
     <div style={{ position: "absolute", left: 0, top: 0, width: SW, height: 54, zIndex: 50, pointerEvents: "none" }}>
-      <div style={{ position: "absolute", left: 40, top: 17, fontFamily, fontWeight: 600, fontSize: 16, color: col, fontVariantNumeric: "tabular-nums" }}>{content.home.time}</div>
+      <div style={{ position: "absolute", left: 40, top: 17, fontFamily, fontWeight: 600, fontSize: 16, color: col, fontVariantNumeric: "tabular-nums" }}>{time}</div>
       <div style={{ position: "absolute", right: 30, top: 21, display: "flex", gap: 6, alignItems: "center" }}>
         <svg width="18" height="12" viewBox="0 0 18 12">
           {[0, 1, 2, 3].map((i) => (
@@ -35,7 +35,7 @@ export const StatusBar: React.FC<{ dark?: boolean }> = ({ dark = false }) => {
  * Generic, unbranded phone: black body, 64px radius, 10px bezel, small pill camera.
  * Children are laid out in 393×852 app points; the screen is scaled ×1.094 to 430×932.
  */
-export const PhoneBody: React.FC<{ children: React.ReactNode; darkStatus?: boolean; overlay?: React.ReactNode }> = ({ children, darkStatus = false, overlay }) => {
+export const PhoneBody: React.FC<{ children: React.ReactNode; darkStatus?: boolean; overlay?: React.ReactNode; time?: string }> = ({ children, darkStatus = false, overlay, time }) => {
   const sw = SW * PS;
   const sh = SH * PS;
   return (
@@ -54,7 +54,7 @@ export const PhoneBody: React.FC<{ children: React.ReactNode; darkStatus?: boole
       <div style={{ width: sw, height: sh, borderRadius: PR - BZ, overflow: "hidden", position: "relative", background: C.white, isolation: "isolate" }}>
         <div style={{ width: SW, height: SH, transform: `scale(${PS})`, transformOrigin: "0 0", position: "relative" }}>
           {children}
-          <StatusBar dark={darkStatus} />
+          <StatusBar dark={darkStatus} time={time} />
           {overlay}
         </div>
         {/* pill camera */}

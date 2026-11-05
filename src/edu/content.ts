@@ -52,19 +52,19 @@ export const EDU: Record<"v1" | "v2", { title: string; caption: string; cards: E
       { at: 0, pair: "G", lines: [[{ t: "Let's get you moving." }]], motion: "A phone clock flips to 8:50. The track starts building." },
       { at: 60, pair: "K", lines: [[{ t: "Like,", b: true }, { t: "right", b: true }, { t: "now.", b: true }]], punch: [60, 75, 90], punchBy: "word", motion: "The card wipes to the next, and the words punch in one by one as the beat drops." },
       { at: 120, pair: "G", lines: [[{ t: "Pod Solo.", b: true }]], motion: "The Pod swings into frame, one seat glowing green." },
-      { at: 150, pair: "G", lines: [[{ t: "Here's how." }]], motion: "The card wipes across on the beat." },
-      { at: 180, pair: "K", lines: [[{ t: "1.", b: true }], [{ t: "Open Shuttlers. Tap Pod." }]], motion: "Phone frame. The Pod tile pulses, and a tap ripple lands on the beat." },
-      { at: 270, pair: "G", lines: [[{ t: "2.", b: true }], [{ t: "Set your destination." }]], motion: "A pin drops on the map with a soft thud. Pickup is already set to where you are." },
-      { at: 360, pair: "K", lines: [[{ t: "3.", b: true }], [{ t: "Choose Pod Solo." }]], motion: "Two taps, two beats." },
-      { at: 450, pair: "G", lines: [[{ t: "4.", b: true }], [{ t: "Pay your way." }]], motion: "Payment options flick past (card, transfer, USSD, wallet), and one is tapped on the beat." },
-      { at: 510, pair: "K", lines: [[{ t: "Blink.", b: true }]], motion: "Alone on the screen. An eye icon blinks, and the frame cuts to black for a beat." },
+      { at: 150, pair: "K", lines: [[{ t: "Here's how." }]], motion: "The card wipes across on the beat." },
+      { at: 180, pair: "G", lines: [[{ t: "1.", b: true }], [{ t: "Open Shuttlers." }], [{ t: "Tap Pod." }]], motion: "Phone frame. The Pod tile pulses, and a tap ripple lands on the beat." },
+      { at: 270, pair: "K", lines: [[{ t: "2.", b: true }], [{ t: "Set your destination." }]], motion: "A pin drops on the map with a soft thud. Pickup is already set to where you are." },
+      { at: 360, pair: "G", lines: [[{ t: "3.", b: true }], [{ t: "Choose Pod Solo." }]], motion: "Two taps, two beats." },
+      { at: 450, pair: "K", lines: [[{ t: "4.", b: true }], [{ t: "Pay your way." }]], motion: "Payment options flick past (card, transfer, USSD, wallet), and one is tapped on the beat." },
+      { at: 510, pair: "G", lines: [[{ t: "Blink.", b: true }]], motion: "Alone on the screen. An eye icon blinks, and the frame cuts to black for a beat." },
       { at: 540, pair: "X", lines: [], motion: "(cut to black for a beat)" },
-      { at: 555, pair: "K", lines: [[{ t: "Blink.", b: true }]], motion: "" },
+      { at: 555, pair: "G", lines: [[{ t: "Blink.", b: true }]], motion: "" },
       { at: 570, pair: "G", lines: [[{ t: "And your Pod is here.", b: true }]], motion: "The music halts dead. The Pod icon is at the pin, and the only sound is a door click." },
-      { at: 630, pair: "K", lines: [[{ t: "All yours." }]], motion: "The beat kicks back in. One seat glows, then the whole car glows green around it." },
+      { at: 630, pair: "G", lines: [[{ t: "All yours." }]], motion: "The beat kicks back in. One seat glows, then the whole car glows green around it." },
       {
         at: 690,
-        pair: "G",
+        pair: "K",
         lines: [[{ t: "Catch a call." }], [{ t: "Catch a nap." }], [{ t: "Catch your breath." }]],
         punch: [690, 720, 750],
         punchBy: "line",
@@ -80,4 +80,34 @@ export const EDU: Record<"v1" | "v2", { title: string; caption: string; cards: E
 export const V1_ART = {
   calendarTop: ["TODAY", "TOMORROW"],
   calendarBody: ["NOW", "7:00 AM"],
+};
+
+// Video 2 in-app copy, from Abraham's Pod Solo screenshots (Drive: References/1–6.JPG, Nov 2026).
+// Personal wallet balance is deliberately not shown.
+export const V2_APP = {
+  phoneTime: "8:50",
+  clock: ["8:49", "8:50"],
+  plan: {
+    pickup: "Elegba Festival Drive, Eti-Osa, Lagos",
+    current: "· Current",
+    dropoff: "Sanusi Fafunwa Street, Lagos, Nigeria",
+    leaving: "Leaving now",
+    change: "Change",
+  },
+  options: {
+    distance: "3.4 km · 11 mins",
+    daily: { title: "Daily", sub: "No bus route on this pair yet" },
+    podSolo: { title: "Pod Solo", sub: "Get a car in minutes", price: "₦2,734.79", unit: "per trip" },
+    podShared: { title: "Pod Shared", sub: "No pod runs this pair yet" },
+    rent: { title: "Rent", sub: "Any vehicle, your schedule" },
+    cta: "Continue with Pod Solo",
+  },
+  pay: {
+    title: "Select Payment Method",
+    amount: "₦3,008.27",
+    finishIn: "Finish paying in Shuttlers Pay",
+    countdownFrom: 291,
+    methods: ["Card", "Bank Transfer", "USSD", "Personal wallet", "Company wallet · Shuttlers"],
+    cta: "Continue to payment",
+  },
 };

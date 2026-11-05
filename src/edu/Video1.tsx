@@ -15,10 +15,10 @@ const V = EDU.v1;
 const CARDS = V.cards;
 const SFX = T.edu.v1.sfx;
 
-type Ctx = { f: number; card: EduCard; fg: string; bg: string; F: (typeof FORMATS)[Fmt]; fmt: Fmt };
+export type Ctx = { f: number; card: EduCard; fg: string; bg: string; F: (typeof FORMATS)[Fmt]; fmt: Fmt };
 
 /** Headline: first line big, follow-up lines at 55% (bold/regular mix like the reference). */
-const Headline: React.FC<Ctx & { outAt?: number | null; top?: number; center?: boolean }> = ({ f, card, fg, F, outAt = null, top, center = false }) => {
+export const Headline: React.FC<Ctx & { outAt?: number | null; top?: number; center?: boolean }> = ({ f, card, fg, F, outAt = null, top, center = false }) => {
   const big = card.lines.slice(0, 1);
   const rest = card.lines.slice(1);
   return (
@@ -30,7 +30,7 @@ const Headline: React.FC<Ctx & { outAt?: number | null; top?: number; center?: b
 };
 
 /** Places art centred at the format's art anchor, scaled by its art scale. */
-const Art: React.FC<{ F: Ctx["F"]; dx?: number; dy?: number; scale?: number; children: React.ReactNode }> = ({ F, dx = 0, dy = 0, scale = 1, children }) => (
+export const Art: React.FC<{ F: Ctx["F"]; dx?: number; dy?: number; scale?: number; children: React.ReactNode }> = ({ F, dx = 0, dy = 0, scale = 1, children }) => (
   <div style={{ position: "absolute", left: F.art.cx + dx * F.art.s, top: F.art.cy + dy * F.art.s, transform: `translate(-50%, -50%) scale(${F.art.s * scale})` }}>{children}</div>
 );
 
