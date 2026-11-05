@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, staticFile } from "remotion";
+import { AbsoluteFill, random, staticFile } from "remotion";
 import { EASE } from "../config/brand";
 import { sp, tw } from "../components/motion";
 import type { Seg } from "./content";
@@ -7,28 +7,35 @@ import { POPPINS } from "./theme";
 
 const SNAP = { damping: 18, stiffness: 260 };
 
-/** Uber Drive Now-style entrance: the word drops in with vertical motion blur and settles on a snap spring. */
-export const dropStyle = (f: number, at: number, dist = 110): React.CSSProperties => {
+/**
+ * Uber Drive Now-style entrance with the launch film's settle: the word drops in with vertical
+ * motion blur, starting from a seeded tilt and a slight overscale that spring back to rest.
+ */
+export const dropStyle = (f: number, at: number, dist = 110, seed?: string): React.CSSProperties => {
   if (f < at) return { opacity: 0 };
   const k = sp(f, at, SNAP);
   const v = Math.abs(sp(f + 0.5, at, SNAP) - sp(f - 0.5, at, SNAP));
+  const rot = seed ? (random(`${seed}-r`) * 2 - 1) * 6 : 0;
+  const dx = seed ? (random(`${seed}-x`) * 2 - 1) * 18 : 0;
   return {
     opacity: tw(f, at, at + 3),
-    transform: `translateY(${(1 - k) * dist}px)`,
+    transform: `translate(${dx * (1 - k)}px, ${(1 - k) * dist}px) rotate(${rot * (1 - k)}deg) scale(${1 + 0.08 * (1 - k)})`,
     filter: v > 0.02 ? `blur(${Math.min(16, v * 70)}px)` : undefined,
   };
 };
 
-/** Exit: a fast lift-off with blur (exits are quicker than entrances). */
-export const liftStyle = (f: number, at: number): React.CSSProperties => {
+/** Exit: words fly up and out with blur and a little spin (exits are quicker than entrances). */
+export const liftStyle = (f: number, at: number, seed = "x"): React.CSSProperties => {
   if (f < at) return {};
   const p = tw(f, at, at + 5, 0, 1, EASE.in);
-  return { opacity: 1 - p, transform: `translateY(${-80 * p}px)`, filter: `blur(${10 * p}px)` };
+  const rot = (random(`${seed}-lr`) * 2 - 1) * 10;
+  return { opacity: 1 - p, transform: `translateY(${-120 * p}px) rotate(${rot * p}deg) scale(${1 + 0.1 * p})`, filter: `blur(${12 * p}px)` };
 };
 
 /**
- * Kinetic statement. Each word drops in; `punch` gives explicit frames (one per word or per line),
- * otherwise words stagger by 2f from `at`. Bold segments use 800, regular 500 (mixed weights, as in the reference).
+ * Kinetic statement. Each word drops in (settling from a seeded tilt); bold words arrive with a glow
+ * in the frame's accent that cools over 18f. `punch` gives explicit frames (one per word or per line),
+ * otherwise words stagger by 2f from `at`. Words fly out from `outAt`, staggered 1f.
  */
 export const Statement: React.FC<{
   f: number;
@@ -41,8 +48,9 @@ export const Statement: React.FC<{
   outAt?: number | null;
   align?: "left" | "center";
   lineGap?: number;
+  seed?: string;
   style?: React.CSSProperties;
-}> = ({ f, lines, at, size, color, punch, punchBy, outAt = null, align = "left", lineGap = 0.04, style }) => {
+}> = ({ f, lines, at, size, color, punch, punchBy, outAt = null, align = "left", lineGap = 0.04, seed = "st", style }) => {
   let wi = 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: size * lineGap, alignItems: align === "center" ? "center" : "flex-start", ...style }}>
@@ -52,8 +60,21 @@ export const Statement: React.FC<{
             seg.t.split(" ").map((w) => {
               const idx = wi++;
               const t0 = punch && punchBy === "word" ? punch[idx] : punch && punchBy === "line" ? punch[li] : at + idx * 2;
+              const g = seg.b ? 1 - tw(f, t0, t0 + 18, 0, 1, EASE.inOut) : 0;
+              const ws = `${seed}-${idx}`;
+              const inS = dropStyle(f, t0, 110, ws);
+              const outS = outAt !== null && f >= outAt + idx ? liftStyle(f, outAt + idx, ws) : null;
               return (
-                <span key={`${li}-${idx}`} style={{ display: "inline-block", fontWeight: seg.b ? 800 : 500, ...dropStyle(f, t0), ...(outAt !== null ? liftStyle(f, outAt) : {}) }}>
+                <span
+                  key={`${li}-${idx}`}
+                  style={{
+                    display: "inline-block",
+                    fontWeight: seg.b ? 800 : 500,
+                    textShadow: g > 0.02 && f >= t0 ? `0 0 ${size * 0.25 * g}px ${color}` : undefined,
+                    ...(outS ?? inS),
+                    opacity: (inS.opacity as number | undefined ?? 1) * ((outS?.opacity as number | undefined) ?? 1),
+                  }}
+                >
                   {w}
                 </span>
               );
