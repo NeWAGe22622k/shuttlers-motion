@@ -91,7 +91,7 @@ const Page1: React.FC<{ f: number }> = ({ f }) => (
     </div>
     {/* type reveals, mid-flight and landed */}
     <MaskRise f={f % 30} at={0} lines={["maskRise words"]} size={56} style={{ position: "absolute", left: 1300, top: 330 }} />
-    <Slice f={f % 30} at={0} lines={["slice locks"]} size={56} style={{ position: "absolute", left: 1300, top: 420 }} />
+    <Slice f={f % 30} lock={6} lines={["slice locks"]} size={56} style={{ position: "absolute", left: 1300, top: 420 }} />
     <div style={{ position: "absolute", left: 1300, top: 510 }}>
       <FillSweep f={f % 30} at={6} text="fillSweep" size={72} />
     </div>

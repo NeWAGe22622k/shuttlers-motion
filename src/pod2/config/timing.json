@@ -1,5 +1,5 @@
 {
- "_doc": "PodVideo2-16x9 (How to book Pod Solo, Pod Now). 30fps, 900f. BPM 120 \u2192 BEAT 15f, BAR 60f. Every frame number the film and the score use lives here (read by src/pod2 and audio/build_v2_16x9_audio.py).",
+ "_doc": "PodVideo2-16x9 (How to book Pod Solo, Pod Now). 30fps, 900f. BPM 120: beat n = frame n*15 = sample n*24000 (48 kHz); an audio cue at frame F sits at sample round(F*1600). Every accent's visual hit frame equals its audio cue frame. Cues are on the beat grid unless listed under audio.offbeat. Read by src/pod2 and audio/build_v2_16x9_audio.py.",
  "fps": 30,
  "duration": 900,
  "bpm": 120,
@@ -72,12 +72,13 @@
   "wipeDur": 12,
   "maskGrowPodTile": [
    180,
-   192
+   190
   ],
   "maskGrowEye": [
    540,
    555
   ],
+  "eyeContentUntil": 547,
   "maskGrowPodMarker": [
    630,
    642
@@ -92,15 +93,14 @@
  "s1": {
   "flip": [
    10,
-   22
+   20
   ],
-  "flipLeafSplit": 16,
-  "flip2Delay": 2,
-  "line": 24
+  "flipLeafSplit": 15,
+  "line": 30
  },
  "s2": {
   "words": [
-   62,
+   60,
    75,
    90
   ],
@@ -118,10 +118,10 @@
    128,
    136
   ],
-  "line": 124
+  "lineLock": 135
  },
  "s4": {
-  "line": 152,
+  "line": 150,
   "travel": [
    165,
    180
@@ -132,8 +132,6 @@
   "out": 510
  },
  "s5": {
-  "numeral": 182,
-  "line": 186,
   "pulses": [
    195,
    210,
@@ -141,30 +139,32 @@
   ],
   "pulseDraw": 7,
   "tap": 240,
+  "lift": 242,
   "push": [
    250,
    260
   ]
  },
  "s6": {
-  "numeral": 270,
-  "line": 272,
   "locateRing": [
-   272,
-   285
+   270,
+   284
   ],
   "tapDest": 285,
   "searchPush": [
    285,
    295
   ],
-  "type": [
-   293,
-   314
-  ],
-  "refreshAt": [
-   1,
-   4
+  "keys": [
+   294,
+   296,
+   298,
+   300,
+   302,
+   304,
+   306,
+   308,
+   310
   ],
   "refreshDur": 6,
   "tapResult": 315,
@@ -184,18 +184,17 @@
    330,
    344
   ],
-  "thud": 330,
+  "pin": 330,
   "route": [
    332,
    352
-  ]
+  ],
+  "lift": 332
  },
  "s7": {
-  "numeral": 360,
-  "line": 362,
   "rows": [
    360,
-   380
+   372
   ],
   "rowStagger": 3,
   "roll": [
@@ -207,10 +206,11 @@
    390,
    398
   ],
+  "lift": 392,
   "tapContinue": 420,
   "fare": [
-   425,
-   437
+   424,
+   436
   ],
   "maxPayRoll": [
    432,
@@ -218,39 +218,55 @@
   ]
  },
  "s8": {
-  "numeral": 450,
-  "line": 452,
   "sheet": [
-   452,
-   464
+   450,
+   462
   ],
-  "reel": [
+  "reelTicks": [
    452,
+   454,
+   456,
+   458,
+   460,
+   462,
+   465,
+   468,
+   472,
    478
   ],
+  "reelStart": 450,
   "reelBlur": [
-   452,
-   470
+   450,
+   466
   ],
   "tapCard": 480,
   "radio": [
    480,
    484
   ],
+  "lift": 482,
   "success": [
-   490,
-   500
+   486,
+   495
   ],
   "check": [
-   494,
-   506
+   495,
+   507
   ]
  },
  "s9": {
-  "blink": [
-   525,
-   533
+  "eyeSize": 240,
+  "blinks": [
+   [
+    518,
+    526
+   ],
+   [
+    533,
+    541
+   ]
   ],
+  "windowScale": 4.0,
   "black": [
    555,
    570
@@ -274,7 +290,7 @@
    645,
    659
   ],
-  "line": 640
+  "line": 645
  },
  "s12": {
   "beats": [
@@ -287,16 +303,12 @@
    705
   ],
   "napClose": [
-   722,
-   732
+   720,
+   730
   ],
   "breathDraw": [
-   752,
-   764
-  ],
-  "glide": [
-   766,
-   780
+   750,
+   762
   ]
  },
  "s13": {
@@ -304,26 +316,30 @@
    780,
    790
   ],
+  "road": [
+   780,
+   792
+  ],
   "settle": [
    780,
    794
   ],
-  "line": 790,
+  "lineLock": 795,
   "pull": [
    794,
    840
   ]
  },
  "s14": {
-  "mark": 842,
+  "mark": 845,
   "line": 848,
-  "tags": [
-   860,
-   868,
-   876
+  "tagLocks": [
+   855,
+   870,
+   885
   ],
   "push": [
-   876,
+   870,
    900
   ]
  },
@@ -336,7 +352,6 @@
   480
  ],
  "finger": {
-  "lead": 9,
   "windows": [
    [
     228,
@@ -354,74 +369,207 @@
  },
  "audio": {
   "sampleRate": 48000,
+  "_doc": "onGrid cues must be multiples of 15 frames (asserted). offbeat cues are deliberate and the groove drops any non-beat event within 60 ms of them.",
   "build": [
    0,
    60
   ],
-  "clack": [
-   15,
-   17,
-   20,
-   22
-  ],
   "drop": 60,
-  "hits": [
-   62,
-   75,
-   90,
-   124
-  ],
-  "stabs": [
-   182,
-   270,
-   360,
-   450
-  ],
-  "taps": [
-   240,
-   285,
-   315,
-   390,
-   420,
-   480
-  ],
-  "reelTicks": [
-   452,
-   478
-  ],
-  "wipes": [
-   54,
-   144,
-   834
-  ],
-  "thud": 330,
   "thinFrom": 510,
-  "blinkTick": 529,
-  "lastHit": 555,
   "halt": 570,
-  "door": 590,
   "backIn": 630,
+  "drumsOutAfter": 870,
+  "end": 900,
+  "onGrid": {
+   "clack": [
+    15
+   ],
+   "hits": [
+    60,
+    75,
+    90,
+    120
+   ],
+   "stabs": [
+    180,
+    270,
+    360,
+    450
+   ],
+   "taps": [
+    240,
+    285,
+    315,
+    390,
+    420,
+    480
+   ],
+   "pin": [
+    330
+   ],
+   "lastHit": [
+    555
+   ],
+   "backIn": [
+    630
+   ],
+   "plucks": [
+    690,
+    720,
+    750
+   ],
+   "whoosh": [
+    780
+   ],
+   "finalHit": [
+    840
+   ],
+   "endTicks": [
+    855,
+    870,
+    885
+   ]
+  },
+  "offbeat": {
+   "clack": [
+    20
+   ],
+   "keys": [
+    294,
+    296,
+    298,
+    302,
+    304,
+    306,
+    308,
+    310
+   ],
+   "reel": [
+    452,
+    454,
+    456,
+    458,
+    460,
+    462,
+    468,
+    472,
+    478
+   ],
+   "blinks": [
+    522,
+    537
+   ],
+   "door": [
+    590
+   ],
+   "wipes": [
+    54,
+    144,
+    834
+   ]
+  },
+  "keysOnGrid": [
+   300
+  ],
+  "reelOnGrid": [
+   465
+  ],
   "swell": [
    645,
    690
   ],
-  "plucks": [
-   690,
-   720,
-   750
+  "whooshLen": 32
+ },
+ "story": {
+  "numerals": [
+   180,
+   270,
+   360,
+   450
   ],
-  "whoosh": [
-   780,
-   812
+  "numeralRoll": 10,
+  "lineLocks": [
+   195,
+   285,
+   375,
+   465
   ],
-  "finalHit": 840,
-  "endTicks": [
-   860,
-   868,
-   876
+  "lineOut": 4
+ },
+ "camera": {
+  "to": [
+   600,
+   540
   ],
-  "drumsOutAfter": 870,
-  "end": 900,
-  "_doc": "Audio cue frames (read by audio/build_v2_16x9_audio.py). clack = the split-flap leaves landing (top leaf, bottom leaf per minute digit)."
+  "keys": [
+   {
+    "at": 188,
+    "roi": [
+     196,
+     392
+    ],
+    "zoom": 1.5
+   },
+   {
+    "at": 246,
+    "zoom": 1
+   },
+   {
+    "at": 260,
+    "roi": [
+     196,
+     232
+    ],
+    "zoom": 1.75
+   },
+   {
+    "at": 321,
+    "roi": [
+     214,
+     300
+    ],
+    "zoom": 1.45
+   },
+   {
+    "at": 352,
+    "zoom": 1
+   },
+   {
+    "at": 362,
+    "roi": [
+     196,
+     548
+    ],
+    "zoom": 1.6
+   },
+   {
+    "at": 424,
+    "roi": [
+     196,
+     512
+    ],
+    "zoom": 1.7
+   },
+   {
+    "at": 444,
+    "zoom": 1
+   },
+   {
+    "at": 452,
+    "roi": [
+     196,
+     392
+    ],
+    "zoom": 1.6
+   },
+   {
+    "at": 486,
+    "roi": [
+     196,
+     640
+    ],
+    "zoom": 1.45
+   }
+  ]
  }
 }

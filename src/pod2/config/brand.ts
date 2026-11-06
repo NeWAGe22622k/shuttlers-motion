@@ -43,27 +43,30 @@ export const SPRING = {
   glide: { damping: 40, stiffness: 120, overshootClamping: true },
 } as const;
 
-export const TYPE = { hero: 160, title: 104, step: 72, small: 40, numeral: 280 };
+/** Minimum 48px for film type (in-phone UI and its lift-outs are app UI at app sizes). */
+export const TYPE = { hero: 160, title: 104, step: 80, small: 48, numeral: 220, word: 160 };
 export const TRACK = { tight: "-0.02em" };
 
 export const W = 1920;
 export const H = 1080;
 export const SAFE = { x0: 96, x1: 1824, y0: 60, y1: 1020 };
 
-/** Phone: screen 393×852 app points scaled to 430×932, 10px bezel outside, 64px outer radius. */
+/** Phone: screen 393×852 app points scaled ×1.17 to 1000px tall (10px bezel outside, 64px outer radius). */
 export const PHONE = {
-  cx: 560,
+  cx: 620,
   cy: 540,
   appW: 393,
   appH: 852,
-  scale: 430 / 393,
+  scale: 1000 / 852,
   bezel: 10,
   radius: 64,
   perspective: 1800,
   ry: -10,
   rx: 5,
 };
-export const STORY = { x0: 1040, x1: 1800, top: 196 };
+export const STORY = { x0: 1040, x1: 1800, top: 240 };
+/** Lift-outs land in the story zone at 1.6× their in-phone size. */
+export const LIFT = { scale: 1.6 };
 
 /** Motion constants (durations in frames; brief §4). */
 export const M = {

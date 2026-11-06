@@ -9,7 +9,7 @@ import { phonePose, projectApp } from "./components/Phone";
 import { GradientWipe, MaskGrow, growScale } from "./components/transitions";
 import { S1, S2, S3, S4 } from "./scenes/Intro";
 import { PhoneScene } from "./scenes/PhoneAct";
-import { Black, eyeMaskPath, podMaskPath, S10, S11, S12, S13, S14, S9 } from "./scenes/Outro";
+import { Black, podMaskPath, S10, S11, S12, S13, S14, S9 } from "./scenes/Outro";
 import { POS } from "./screens/Screens";
 
 /**
@@ -42,8 +42,7 @@ const Scenes: React.FC<{ f: number }> = ({ f }) => {
   if (f < TR.maskGrowPodTile[0]) return <S4 />;
   if (f < TR.maskGrowPodTile[1]) return <MaskGrow f={f} a={TR.maskGrowPodTile[0]} b={TR.maskGrowPodTile[1]} from={<S4 />} to={<PhoneScene />} shape={tileMaskPath} />;
   if (f < T.scenes.s9[0]) return <PhoneScene />;
-  if (f < TR.maskGrowEye[0]) return <S9 />;
-  if (f < TR.maskGrowEye[1]) return <MaskGrow f={f} a={TR.maskGrowEye[0]} b={TR.maskGrowEye[1]} from={<S9 />} to={<Black />} shape={eyeMaskPath} />;
+  if (f < TR.maskGrowEye[1]) return <S9 />; // S9 grows its own eye window to black (f540–555)
   if (f < T.scenes.s10[0]) return <Black />;
   if (f < TR.maskGrowPodMarker[0]) return <S10 />;
   if (f < TR.maskGrowPodMarker[1]) return <MaskGrow f={f} a={TR.maskGrowPodMarker[0]} b={TR.maskGrowPodMarker[1]} from={<S10 />} to={<S11 />} shape={podMaskPath} />;

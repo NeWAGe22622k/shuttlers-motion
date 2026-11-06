@@ -36,7 +36,8 @@ export const GradientWipe: React.FC<{ f: number; at: number; from: React.ReactNo
   return (
     <AbsoluteFill>
       <AbsoluteFill>{from}</AbsoluteFill>
-      <AbsoluteFill style={{ clipPath: leftOf(e - BAND_H) }}>{to}</AbsoluteFill>
+      {/* the next scene runs 4px under the band so no seam of the old scene shows at the trailing edge */}
+      <AbsoluteFill style={{ clipPath: leftOf(e - BAND_H + 4) }}>{to}</AbsoluteFill>
       <div
         style={{
           position: "absolute",

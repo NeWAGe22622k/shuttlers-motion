@@ -46,44 +46,42 @@ export const RollText: React.FC<{ text: string; f: number; a: number; b: number;
 /* ------------------------------------------------------------------ split-flap clock */
 
 /**
- * A real 3D split-flap digit: the top leaf of the old digit rotates down on rotateX (quintIn),
- * then the new digit's bottom leaf lands (expoOut). A hard shadow line sits on the fold.
- * `p`: 0 → 1 over the whole flip (leaf split at `split`).
+ * A real split-flap card: two separate halves with a hinge gap between them and hinge pins at the
+ * sides. On a flip the old digit's top leaf rotates down on rotateX about the hinge (quintIn), then
+ * the new digit's bottom leaf lands (expoOut). The glyph is centred on the hinge, so the gap cuts it
+ * the way a real flap display does. `p`: 0 → 1 over the whole flip (top leaf until `split`).
  */
-export const FlapDigit: React.FC<{ from: string; to: string; p: number; split?: number; w: number; h: number; font: number }> = ({ from, to, p, split = 0.5, w, h, font }) => {
+export const FlapDigit: React.FC<{ from: string; to: string; p: number; split?: number; w: number; h: number; font: number; gap?: number }> = ({ from, to, p, split = 0.5, w, h, font, gap = 8 }) => {
   const top = clamp(p / split);
   const bot = clamp((p - split) / (1 - split));
   const topA = EASE.quintIn(top) * 90;
   const botA = (1 - EASE.expoOut(bot)) * 90;
-  const tile = "#15161C";
-  const leafShade = (t: number) => {
-    const v = Math.round(0x15 + (0x08 - 0x15) * t);
-    return `rgb(${v},${v + 1},${v + 6})`;
+  const half = (h - gap) / 2;
+  const R = 22;
+  const tile = "#17181E";
+  const shade = (t: number) => {
+    const v = Math.round(0x17 + (0x0a - 0x17) * clamp(t));
+    return `rgb(${v},${v + 1},${v + 7})`;
   };
-  const glyph = (ch: string, half: "top" | "bottom", bg = tile): React.ReactNode => (
-    <div style={{ position: "absolute", left: 0, top: half === "top" ? 0 : h / 2, width: w, height: h / 2, overflow: "hidden", background: bg, borderRadius: half === "top" ? "18px 18px 0 0" : "0 0 18px 18px" }}>
-      <div style={{ position: "absolute", left: 0, top: half === "top" ? 0 : -h / 2, width: w, height: h, display: "flex", alignItems: "center", justifyContent: "center", fontFamily, fontWeight: 700, fontSize: font, color: C.white, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>{ch}</div>
+  const Half: React.FC<{ ch: string; part: "top" | "bottom"; bg?: string }> = ({ ch, part, bg = tile }) => (
+    <div style={{ position: "absolute", left: 0, top: 0, width: w, height: half, overflow: "hidden", background: bg, borderRadius: part === "top" ? `${R}px ${R}px 4px 4px` : `4px 4px ${R}px ${R}px` }}>
+      <div style={{ position: "absolute", left: 0, top: part === "top" ? 0 : -(half + gap), width: w, height: h, display: "flex", alignItems: "center", justifyContent: "center", fontFamily, fontWeight: 700, fontSize: font, lineHeight: 1, color: C.white, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>
+        {ch}
+      </div>
     </div>
   );
+  const at = (y: number, children: React.ReactNode, style?: React.CSSProperties) => <div style={{ position: "absolute", left: 0, top: y, width: w, height: half, ...style }}>{children}</div>;
   return (
-    <div style={{ position: "relative", width: w, height: h, perspective: 1400 }}>
-      {/* static halves: new top behind the falling leaf, old bottom until the new leaf lands */}
-      {glyph(p > 0 ? to : from, "top")}
-      {glyph(bot >= 1 ? to : from, "bottom")}
-      {/* falling top leaf (old digit) */}
-      {p > 0 && top < 1 ? (
-        <div style={{ position: "absolute", left: 0, top: 0, width: w, height: h / 2, transformOrigin: "50% 100%", transform: `rotateX(${(-topA).toFixed(2)}deg)`, backfaceVisibility: "hidden" }}>
-          {glyph(from, "top", leafShade(top))}
-        </div>
-      ) : null}
-      {/* landing bottom leaf (new digit) */}
-      {top >= 1 && bot < 1 ? (
-        <div style={{ position: "absolute", left: 0, top: h / 2, width: w, height: h / 2, transformOrigin: "50% 0%", transform: `rotateX(${botA.toFixed(2)}deg)` }}>
-          <div style={{ position: "absolute", left: 0, top: -h / 2, width: w, height: h }}>{glyph(to, "bottom", leafShade(1 - bot))}</div>
-        </div>
-      ) : null}
-      {/* hard shadow line on the fold */}
-      <div style={{ position: "absolute", left: 0, top: h / 2 - 3, width: w, height: 6, background: C.night }} />
+    <div style={{ position: "relative", width: w, height: h, perspective: 1600 }}>
+      {/* static halves: the new top sits behind the falling leaf; the old bottom stays until the new leaf lands */}
+      {at(0, <Half ch={p > 0 ? to : from} part="top" />)}
+      {at(half + gap, <Half ch={bot >= 1 ? to : from} part="bottom" />)}
+      {p > 0 && top < 1 ? at(0, <Half ch={from} part="top" bg={shade(top)} />, { transformOrigin: `50% ${half + gap / 2}px`, transform: `rotateX(${(-topA).toFixed(2)}deg)`, backfaceVisibility: "hidden" }) : null}
+      {top >= 1 && bot < 1 ? at(half + gap, <Half ch={to} part="bottom" bg={shade(1 - bot)} />, { transformOrigin: `50% ${-gap / 2}px`, transform: `rotateX(${botA.toFixed(2)}deg)` }) : null}
+      {/* hinge pins */}
+      {[-6, w - 6].map((x) => (
+        <div key={x} style={{ position: "absolute", left: x, top: half + gap / 2 - 14, width: 12, height: 28, borderRadius: 4, background: "#2A2C34" }} />
+      ))}
     </div>
   );
 };

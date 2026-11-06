@@ -2,7 +2,7 @@ import React from "react";
 import { measureText } from "@remotion/layout-utils";
 import { C, EASE, M, TRACK, fontFamily } from "../config/brand";
 import { g2Text, G2Tone } from "../config/gradients";
-import { mix, tw } from "./motion";
+import { clamp, mix, tw } from "./motion";
 
 /**
  * Type reveals (brief §4). None of them fade: everything is a hard mask, a slide or a scale.
@@ -88,28 +88,33 @@ const SLICES: [number, number][] = [
   [0.7, 1],
 ];
 
+/** Slice timing (brief revision): 6 frames, locking exactly on `lock` (a beat); at most 3 visibly split frames. */
+export const SLICE_DUR = 6;
+const sliceEase = (t: number) => 1 - Math.pow(1 - t, 8); // 3 frames in, the bands are within ~1px
+
 /**
  * Each line is rendered three times, each copy clipped to one horizontal band of the glyph box;
- * the bands slide in from alternating sides and lock together at `at + dur`.
- * `out` (optional) reverses it (bands leave to alternating sides, quintIn).
+ * the bands slide in from alternating sides and lock together exactly on `lock` (all lines at once).
+ * `outAt` (optional) sends the bands back out to alternating sides in 3 frames (quintIn).
  */
 export const Slice: React.FC<
-  TypeProps & { f: number; at: number; lines: string[]; dur?: number; dist?: number; outAt?: number; outDur?: number; lineStagger?: number; fill?: (li: number) => React.CSSProperties | undefined; style?: React.CSSProperties }
-> = ({ f, at, lines, dur = M.slice, dist = 420, outAt, outDur = 6, lineStagger = 2, fill, style, ...tp }) => {
+  TypeProps & { f: number; lock: number; lines: string[]; dist?: number; outAt?: number; fill?: (li: number) => React.CSSProperties | undefined; style?: React.CSSProperties }
+> = ({ f, lock, lines, dist = 300, outAt, fill, style, ...tp }) => {
   const ts = typeStyle(tp);
   const lh = tp.size * (tp.lh ?? 1.08);
+  const a0 = lock - SLICE_DUR;
+  if (outAt !== undefined && f >= outAt + 3) return null;
   return (
     <div style={{ position: "relative", ...style }}>
       {lines.map((ln, li) => {
-        const a0 = at + li * lineStagger;
         if (f < a0) return <div key={li} style={{ height: lh }} />;
         return (
           <div key={li} style={{ position: "relative", height: lh }}>
             {SLICES.map(([t0, t1], si) => {
               const side = (si + li) % 2 === 0 ? -1 : 1;
-              const p = tw(f, a0, a0 + dur, 0, 1, EASE.expoOut);
-              const q = outAt === undefined ? 0 : tw(f, outAt + si, outAt + si + outDur, 0, 1, EASE.quintIn);
-              const x = side * dist * (1 - p) - side * dist * 1.6 * q;
+              const p = f >= lock ? 1 : sliceEase(clamp((f - a0) / SLICE_DUR));
+              const q = outAt === undefined ? 0 : tw(f, outAt, outAt + 3, 0, 1, EASE.quintIn);
+              const x = side * dist * (1 - p) - side * dist * 2.4 * q;
               return (
                 <div
                   key={si}

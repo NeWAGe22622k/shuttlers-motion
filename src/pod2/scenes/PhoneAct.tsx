@@ -1,37 +1,76 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { EASE, M, STORY, T, TYPE } from "../config/brand";
-import { s5, s6, s7, s8 } from "../config/content";
+import { EASE, LIFT, PHONE, SAFE, SPRING, STORY, T, TYPE } from "../config/brand";
+import { app, s5, s6, s7, s8, trip } from "../config/content";
 import { G3, g2Text } from "../config/gradients";
-import { press, tw } from "../components/motion";
-import { FingerLayer, Phone3D, Tap } from "../components/Phone";
-import { Slice, scaleCut, textWidth, typeStyle, wrapLines } from "../components/type";
-import { FareSheet, HomeScreen, KeyboardLayer, LoadingOverlay, OptionsScreen, OptionsState, PaySheet, PlanScreen, POS, Push, SearchScreen, SuccessScreen } from "../screens/Screens";
+import { ServiceCard } from "../../components/ui";
+import { RollText } from "../components/kit";
+import { mix, press, sp, tw } from "../components/motion";
+import { FingerLayer, Phone3D, Pose, Tap, phonePose, projectApp } from "../components/Phone";
+import { Slice, typeStyle, wrapLines } from "../components/type";
+import {
+  DestRow,
+  FareSheet,
+  HomeScreen,
+  KeyboardLayer,
+  LoadingOverlay,
+  OptionRow,
+  OptionsScreen,
+  OptionsState,
+  PayRow,
+  PaySheet,
+  PlanScreen,
+  POS,
+  Push,
+  SearchScreen,
+  SuccessScreen,
+} from "../screens/Screens";
 
 /**
- * Steps 1–4 (f180–510): one persistent 3D phone on G3 paper, step copy in the story zone.
- * Inside the phone every screen change is an iOS push; every tap is a fingertip ring on the glass.
+ * Steps 1–4 (f180–510): one persistent 3D phone (1000px tall) on G3 paper, step copy in the story
+ * zone. For each step the camera pushes into the part of the screen that matters (glide spring,
+ * overshoot-clamped) and pulls back before the next. One element per step lifts out of the phone
+ * into the story zone at 1.6×. Inside the phone every screen change is an iOS push.
  */
 
 const R5 = T.s5;
 const R6 = T.s6;
 const R7 = T.s7;
 const R8 = T.s8;
+const ST = T.story;
 
-/* ------------------------------------------------------------------ typing */
+/* ------------------------------------------------------------------ typing (one key per entry in timing.json) */
 
-const typedAt = (n: number) => R6.type[0] + ((n - 1) * (R6.type[1] - R6.type[0])) / (s6.query.length - 1);
-const lettersAt = (f: number) => {
-  let n = 0;
-  for (let i = 1; i <= s6.query.length; i++) if (f >= typedAt(i)) n = i;
-  return n;
+const KEYS = R6.keys;
+const lettersAt = (f: number) => KEYS.filter((k) => f >= k).length;
+
+/* ------------------------------------------------------------------ camera */
+
+type Cam = { z: number; rx: number; ry: number; sx: number; sy: number };
+
+export const cameraAt = (f: number, pose: Pose = phonePose(f)): Cam => {
+  const cx = PHONE.cx;
+  const cy = PHONE.cy + pose.dy;
+  let c: Cam = { z: 1, rx: cx, ry: cy, sx: cx, sy: cy };
+  for (const k of T.camera.keys as { at: number; roi?: number[]; zoom: number }[]) {
+    let target: Cam = { z: 1, rx: cx, ry: cy, sx: cx, sy: cy };
+    if (k.roi && k.zoom !== 1) {
+      const r = projectApp(k.roi[0], k.roi[1], pose);
+      target = { z: k.zoom, rx: r.x, ry: r.y, sx: T.camera.to[0], sy: T.camera.to[1] };
+    }
+    const t = sp(f, k.at, SPRING.glide);
+    c = { z: mix(c.z, target.z, t), rx: mix(c.rx, target.rx, t), ry: mix(c.ry, target.ry, t), sx: mix(c.sx, target.sx, t), sy: mix(c.sy, target.sy, t) };
+  }
+  return c;
 };
+
+const camApply = (c: Cam, p: { x: number; y: number }) => ({ x: (p.x - c.rx) * c.z + c.sx, y: (p.y - c.ry) * c.z + c.sy });
 
 /* ------------------------------------------------------------------ the screen inside, per frame */
 
 const optionsState = (f: number): OptionsState => ({
   rows: 1,
-  rowIn: [0, 1, 2].map((i) => tw(f, R7.rows[0] + i * R7.rowStagger, R7.rows[0] + i * R7.rowStagger + 12, 0, 1, EASE.expoOut)),
+  rowIn: [0, 1, 2].map((i) => tw(f, R7.rows[0] + i * R7.rowStagger, R7.rows[0] + i * R7.rowStagger + 8, 0, 1, EASE.expoOut)),
   sel: tw(f, R7.selWipe[0], R7.selWipe[1], 0, 1, EASE.expoOut),
   border: tw(f, R7.selWipe[0], R7.selWipe[1], 0, 1, EASE.expoOut),
   rowPress: press(f, R7.tapPodSolo),
@@ -71,8 +110,8 @@ const MapAndSheets: React.FC<{ f: number }> = ({ f }) => {
 
 const Search: React.FC<{ f: number; overlay: boolean }> = ({ f, overlay }) => {
   const letters = lettersAt(f);
-  const t4 = typedAt(4);
-  const refresh = f < t4 ? tw(f, R6.type[0], R6.type[0] + R6.refreshDur, 0, 1, EASE.expoOut) : tw(f, t4, t4 + R6.refreshDur, 0, 1, EASE.expoOut);
+  const t4 = KEYS[3];
+  const refresh = f < t4 ? tw(f, KEYS[0], KEYS[0] + R6.refreshDur, 0, 1, EASE.expoOut) : tw(f, t4, t4 + R6.refreshDur, 0, 1, EASE.expoOut);
   return (
     <>
       <SearchScreen f={f} letters={letters} caret={letters < s6.query.length || Math.floor(f / 8) % 2 === 0} refresh={refresh} refreshFrom={f < t4 ? 0 : 1} resultPress={press(f, R6.tapResult)} />
@@ -83,26 +122,27 @@ const Search: React.FC<{ f: number; overlay: boolean }> = ({ f, overlay }) => {
 
 const AppScreen: React.FC<{ f: number }> = ({ f }) => {
   const pulse = R5.pulses.map((a) => (f >= a && f < a + R5.pulseDraw * 2 ? (f - a) / (R5.pulseDraw * 2) : 0)).find((p) => p > 0) ?? 0;
-  const home = <HomeScreen pulse={pulse} tilePress={press(f, R5.tap)} />;
+  const homeS = <HomeScreen pulse={pulse} tilePress={press(f, R5.tap)} />;
   const plan = <PlanScreen locateRing={tw(f, R6.locateRing[0], R6.locateRing[1], 0, 1, EASE.expoOut)} destPress={press(f, R6.tapDest)} />;
   const pushP = (w: number[]) => tw(f, w[0], w[1], 0, 1, EASE.expoOut);
   let screen: React.ReactNode;
-  if (f < R5.push[0]) screen = home;
-  else if (f < R5.push[1]) screen = <Push p={pushP(R5.push)} from={home} to={plan} />;
+  if (f < R5.push[0]) screen = homeS;
+  else if (f < R5.push[1]) screen = <Push p={pushP(R5.push)} from={homeS} to={plan} />;
   else if (f < R6.searchPush[0]) screen = plan;
   else if (f < R6.searchPush[1]) screen = <Push p={pushP(R6.searchPush)} from={plan} to={<Search f={f} overlay={false} />} />;
   else if (f < R6.mapPush[0]) screen = <Search f={f} overlay />;
   else if (f < R6.mapPush[1]) screen = <Push p={pushP(R6.mapPush)} from={<Search f={f} overlay={false} />} to={<MapAndSheets f={f} />} />;
   else if (f < R8.success[0]) screen = <MapAndSheets f={f} />;
   else {
-    const succ = <SuccessScreen ring={tw(f, R8.check[0], R8.check[0] + 5, 0, 1, EASE.expoOut)} fill={tw(f, R8.check[0] + 5, R8.check[0] + 8, 0, 1, EASE.expoOut)} check={tw(f, R8.check[0] + 6, R8.check[1], 0, 1, EASE.expoOut)} />;
+    const c0 = R8.check[0];
+    const succ = <SuccessScreen ring={tw(f, c0, c0 + 4, 0, 1, EASE.expoOut)} fill={tw(f, c0 + 4, c0 + 7, 0, 1, EASE.expoOut)} check={tw(f, c0 + 5, R8.check[1], 0, 1, EASE.expoOut)} />;
     screen = f < R8.success[1] ? <Push p={pushP(R8.success)} from={<MapAndSheets f={f} />} to={succ} /> : succ;
   }
   // keyboard: arrives with "Plan your ride", stays put through search, drops when the result is tapped
   const kbX = f < R5.push[1] ? (1 - pushP(R5.push)) * 393 : 0;
   const kbHide = tw(f, R6.loading[0], R6.loading[1], 0, 1, EASE.expoOut);
   const n = lettersAt(f);
-  const pressed = n > 0 && f - typedAt(n) < 2 && f < R6.tapResult ? s6.query[n - 1] : null;
+  const pressed = n > 0 && f - KEYS[n - 1] < 2 && f < R6.tapResult ? s6.query[n - 1] : null;
   return (
     <>
       {screen}
@@ -125,54 +165,95 @@ const TAP_POS: [number, number][] = [
 ];
 const TAPS: Tap[] = T.taps.map((at, i) => ({ at, x: TAP_POS[i][0], y: TAP_POS[i][1] }));
 
-/* ------------------------------------------------------------------ story zone */
+/* ------------------------------------------------------------------ story zone: numeral + line + lift-out */
 
 const STEPS = [
-  { at: R5.numeral, line: R5.line, n: s5.step, text: s5.line },
-  { at: R6.numeral, line: R6.line, n: s6.step, text: s6.line },
-  { at: R7.numeral, line: R7.line, n: s7.step, text: s7.line },
-  { at: R8.numeral, line: R8.line, n: s8.step, text: s8.line },
+  { n: s5.step, text: s5.line },
+  { n: s6.step, text: s6.line },
+  { n: s7.step, text: s7.line },
+  { n: s8.step, text: s8.line },
 ];
-const NUM = { top: STORY.top, clipH: 236, offset: -72 };
 
-const Story: React.FC<{ f: number }> = ({ f }) => {
-  const k = STEPS.reduce((acc, s, i) => (f >= s.at ? i : acc), 0);
-  const zoneW = STORY.x1 - STORY.x0;
+// Google Sans: cap top sits at (halfLeading + 0.211em) below the line-box top (ascent .927, descent .244, cap .716)
+const capTop = (size: number, lh: number) => ((lh - 1.171) / 2 + 0.211) * size;
+const NUM = { x: STORY.x0, y: STORY.top, w: 160, h: TYPE.numeral };
+const LINE = { x: STORY.x0 + 160, lh: 1.08 };
+const LINE_Y = NUM.y + capTop(TYPE.numeral, 1) - capTop(TYPE.step, LINE.lh);
+const LINE_W = SAFE.x1 - LINE.x; // lines may run to the title-safe edge
+const linesOf = (i: number) => wrapLines(STEPS[i].text, TYPE.step, LINE_W);
+const liftTop = (i: number) => NUM.y + Math.max(NUM.h, linesOf(i).length * TYPE.step * LINE.lh) + 48;
+
+const stepOf = (f: number) => ST.numerals.reduce((acc, a, i) => (f >= a ? i : acc), 0);
+
+/** Each new numeral replaces the last with a vertical roll: old rolls up, new rolls up from below (10f expoOut). */
+const Numerals: React.FC<{ f: number }> = ({ f }) => {
+  const k = stepOf(f);
+  const at = ST.numerals[k];
+  const p = tw(f, at, at + ST.numeralRoll, 0, 1, EASE.expoOut);
+  const num = (i: number, y: number) => (
+    <div key={i} style={{ position: "absolute", left: 0, top: y, ...typeStyle({ size: TYPE.numeral, lh: 1 }) }}>
+      <span style={g2Text(f, "onLight", i * 60)}>{STEPS[i].n}</span>
+    </div>
+  );
+  return (
+    <div style={{ position: "absolute", left: NUM.x, top: NUM.y, width: NUM.w, height: NUM.h, overflow: "hidden" }}>
+      {k > 0 && p < 1 ? num(k - 1, -p * NUM.h) : null}
+      {f >= at ? num(k, (1 - p) * NUM.h) : null}
+    </div>
+  );
+};
+
+const Lines: React.FC<{ f: number }> = ({ f }) => {
+  const k = stepOf(f);
   return (
     <>
-      {/* numerals: cropped by the top of the story zone; the old one slides out as the new one scale-cuts in */}
-      <div style={{ position: "absolute", left: STORY.x0, top: NUM.top, width: zoneW, height: NUM.clipH, overflow: "hidden" }}>
-        {STEPS.map((s, i) => {
-          if (i > k || i < k - 1) return null;
-          const out = i < k ? tw(f, STEPS[i + 1].at, STEPS[i + 1].at + M.scaleCut, 0, 1, EASE.expoOut) : 0;
-          if (out >= 1) return null;
-          const sc = scaleCut(f, s.at);
-          if (sc === 0) return null;
-          const w = textWidth(s.n, TYPE.numeral);
-          const push = 1 + 0.02 * Math.max(0, (f - s.at) / 30);
-          return (
-            <div key={i} style={{ position: "absolute", left: -out * (w + 120), top: NUM.offset, transform: `scale(${(sc * push).toFixed(4)})`, transformOrigin: `${w / 2}px 60%` }}>
-              <div style={{ ...typeStyle({ size: TYPE.numeral, lh: 1 }) }}>
-                <span style={{ ...g2Text(f, "onLight", i * 60) }}>{s.n}</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {STEPS.map((s, i) => {
-        if (i > k || i < k - 1) return null;
-        if (f < s.line) return null;
-        const outAt = i < STEPS.length - 1 ? STEPS[i + 1].at - 5 : undefined;
-        if (outAt !== undefined && f > outAt + 9) return null;
-        const lines = wrapLines(s.text, TYPE.step, zoneW);
-        const push = 1 + 0.02 * Math.max(0, (f - s.line) / 30);
-        return (
-          <div key={i} style={{ position: "absolute", left: STORY.x0, top: 438, transform: `scale(${push.toFixed(4)})`, transformOrigin: "0 0" }}>
-            <Slice f={f} at={s.line} lines={lines} size={TYPE.step} outAt={outAt} dist={360} />
-          </div>
-        );
+      {[k - 1, k].map((i) => {
+        if (i < 0) return null;
+        const outAt = i < STEPS.length - 1 ? ST.numerals[i + 1] : undefined;
+        if (outAt !== undefined && f >= outAt + 3) return null;
+        return <Slice key={i} f={f} lock={ST.lineLocks[i]} lines={linesOf(i)} size={TYPE.step} outAt={outAt} dist={260} style={{ position: "absolute", left: LINE.x, top: LINE_Y }} />;
       })}
     </>
+  );
+};
+
+/** One lift-out per step: the element flies out of the phone (from its on-screen rect, camera and 3D pose included) to the story zone at 1.6×. */
+const LIFTS = [
+  { at: R5.lift, rect: POS.liftTile, node: () => <ServiceCard kind="pod" {...app.home.services.pod} /> },
+  { at: R6.lift, rect: POS.liftDest, node: () => <DestRow /> },
+  {
+    at: R7.lift,
+    rect: POS.liftPodSolo,
+    node: (f: number) => <OptionRow kind="pod" title={app.options.podSolo.title} sub={app.options.podSolo.sub} unit={app.options.podSolo.unit} price={<RollText text={trip.podPrice} f={f} a={0} b={1} size={16} />} sel={1} border={1} />,
+  },
+  { at: R8.lift, rect: POS.liftCard, node: () => <PayRow i={0} sel={1} /> },
+];
+
+const Lift: React.FC<{ f: number; i: number; pose: Pose; cam: Cam }> = ({ f, i, pose, cam }) => {
+  const L = LIFTS[i];
+  if (f < L.at) return null;
+  const exitAt = i < STEPS.length - 1 ? ST.numerals[i + 1] : T.phone.out;
+  const q = tw(f, exitAt, exitAt + 8, 0, 1, EASE.quintIn);
+  if (q >= 1) return null;
+  const r = L.rect;
+  const src = projectApp(r.x + r.w / 2, r.y + r.h / 2, pose);
+  const srcC = camApply(cam, src);
+  const sSrc = PHONE.scale * src.k * cam.z;
+  const sDst = PHONE.scale * LIFT.scale;
+  const dst = { x: STORY.x0 + (r.w * sDst) / 2, y: liftTop(i) + (r.h * sDst) / 2 };
+  const p = sp(f, L.at, SPRING.glide);
+  const x = mix(srcC.x, dst.x, p) + q * 1200;
+  const y = mix(srcC.y, dst.y, p);
+  const s = mix(sSrc, sDst, p);
+  const tilt = 1 - p;
+  return (
+    <div style={{ position: "absolute", left: x - (r.w * s) / 2, top: y - (r.h * s) / 2, width: r.w * s, height: r.h * s, perspective: 1800 }}>
+      {/* flat, hard-edged lift shadow (ink 10%, no blur) */}
+      <div style={{ position: "absolute", left: 14 * p, top: 18 * p, width: r.w * s, height: r.h * s, borderRadius: 16 * s, background: "rgba(16,17,17,0.10)" }} />
+      <div style={{ position: "absolute", left: 0, top: 0, width: r.w, height: r.h, transformOrigin: "0 0", transform: `rotateY(${(pose.ry * tilt).toFixed(2)}deg) rotateX(${(pose.rx * tilt).toFixed(2)}deg) scale(${s.toFixed(4)})` }}>
+        {L.node(f)}
+      </div>
+    </div>
   );
 };
 
@@ -180,11 +261,18 @@ const Story: React.FC<{ f: number }> = ({ f }) => {
 
 export const PhoneScene: React.FC = () => {
   const f = useCurrentFrame();
+  const pose = phonePose(f);
+  const cam = cameraAt(f, pose);
+  const k = stepOf(f);
   return (
     <AbsoluteFill>
       <G3 f={f} />
-      <Phone3D f={f} screen={<AppScreen f={f} />} glass={<FingerLayer f={f} taps={TAPS} windows={T.finger.windows} />} />
-      <Story f={f} />
+      <AbsoluteFill style={{ transformOrigin: "0 0", transform: `translate(${(cam.sx - cam.rx * cam.z).toFixed(2)}px, ${(cam.sy - cam.ry * cam.z).toFixed(2)}px) scale(${cam.z.toFixed(4)})` }}>
+        <Phone3D f={f} pose={pose} screen={<AppScreen f={f} />} glass={<FingerLayer f={f} taps={TAPS} windows={T.finger.windows} />} />
+      </AbsoluteFill>
+      <Numerals f={f} />
+      <Lines f={f} />
+      {[k - 1, k].map((i) => (i >= 0 ? <Lift key={i} f={f} i={i} pose={pose} cam={cam} /> : null))}
     </AbsoluteFill>
   );
 };

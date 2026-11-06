@@ -36,7 +36,7 @@ export const g1Css = (f: number, w = W, h = H) => {
     { c: C.deepIndigo, x: 0.3, y: 0.95, s: "g1d" },
   ];
   const layers = p.map((q, i) => {
-    const d = drift(q.s, f);
+    const d = drift(q.s, f, 420, 0.32); // visibly moving: ~130px/s
     const r = i === 1 ? 1.0 : 0.85;
     return field(q.c, q.x * w + d.x, q.y * h + d.y, w * 0.62 * r, h * 0.78 * r, i === 2 ? 0.9 : 0.95);
   });
@@ -95,13 +95,13 @@ export const g2Css = (f: number, tone: G2Tone = "bright", phase = 0): string => 
 
 /**
  * Full-frame Pod Flood for the end frame: the conic spins from a point off the top-left corner so
- * the deep greens and the indigo vein sweep the edges while the centre (where the ink lockup sits)
+ * the deep greens sweep the edges (no vein: nothing line-like crosses the lockup) while the centre (where the ink lockup sits)
  * stays in the bright greens (ink on it ≥ 6:1).
  */
 const g2End = (f: number) => {
   const rot = (sec(f) * 10) % 360;
   const d = drift("g2end", f, 60, 0.2);
-  const conic = `conic-gradient(from ${(118 + rot).toFixed(2)}deg at ${(-18 + d.x / 20).toFixed(1)}% ${(-30 + d.y / 20).toFixed(1)}%, ${C.ctaGreen} 0deg, ${C.ctaGreen} 26deg, ${C.priceGreen} 52deg, ${C.deepGreen} 78deg, ${C.indigo} 78deg, ${C.indigo} 78.35deg, ${C.deepGreen} 78.35deg, ${C.priceGreen} 104deg, ${C.ctaGreen} 140deg, ${C.ctaGreen} 360deg)`;
+  const conic = `conic-gradient(from ${(118 + rot).toFixed(2)}deg at ${(-18 + d.x / 20).toFixed(1)}% ${(-30 + d.y / 20).toFixed(1)}%, ${C.ctaGreen} 0deg, ${C.ctaGreen} 26deg, ${C.priceGreen} 52deg, ${C.deepGreen} 80deg, ${C.priceGreen} 108deg, ${C.ctaGreen} 140deg, ${C.ctaGreen} 360deg)`;
   const m1 = drift("g2e1", f, 120, 0.18);
   const m2 = drift("g2e2", f, 120, 0.18);
   return [

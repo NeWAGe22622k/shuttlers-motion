@@ -8,7 +8,7 @@ import { I } from "../../components/Icons";
 import { Asset } from "../../components/core";
 import { Chip, IconCircle, PlaceRow, RecentHomeRow, ServiceCard, Spinner } from "../../components/ui";
 import { KB_H, Keyboard, RollText } from "../components/kit";
-import { clamp, mix, press, rrectPath, tw } from "../components/motion";
+import { clamp, mix, monotone, press, rrectPath, tw } from "../components/motion";
 import { AppMap, MapView } from "./AppMap";
 
 /**
@@ -27,6 +27,11 @@ export const POS = {
   fareTop: 294,
   payTop: 197,
   cardRow: { x: 196, y: 381 + 28 },
+  // lift-out source rects (app points)
+  liftTile: { x: 140, y: 410, w: 112, h: 138 },
+  liftDest: { x: 17, y: 160, w: 358, h: 50 },
+  liftPodSolo: { x: 17, y: 427 + 24 + 77, w: 358, h: 68 },
+  liftCard: { x: 20, y: 381, w: 353, h: 57 },
 };
 
 const Btn: React.FC<{ label: React.ReactNode; w: number; h?: number; bg?: string; color?: string; scale?: number; style?: React.CSSProperties }> = ({ label, w, h = 52, bg = C.ctaGreen, color = C.ink, scale = 1, style }) => (
@@ -304,7 +309,7 @@ const OPT_IMG: Record<OptKind, { src: string; w: number }> = {
 };
 
 /** Ride option row. Selection: mint fill wipes out from the tap point; a 2px linkGreen border draws on. */
-const OptionRow: React.FC<{ kind: OptKind; title: string; sub: string; price?: React.ReactNode; unit?: string; sel?: number; border?: number; tapX?: number; scale?: number }> = ({ kind, title, sub, price, unit, sel = 0, border = 0, tapX = 179, scale = 1 }) => {
+export const OptionRow: React.FC<{ kind: OptKind; title: string; sub: string; price?: React.ReactNode; unit?: string; sel?: number; border?: number; tapX?: number; scale?: number }> = ({ kind, title, sub, price, unit, sel = 0, border = 0, tapX = 179, scale = 1 }) => {
   const d = rrectPath(1, 1, 356, 66, 15);
   const ev = border > 0 ? evolvePath(clamp(border, 0.0001, 1), d) : null;
   return (
@@ -425,7 +430,7 @@ export const FareSheet: React.FC<{ f: number; roll: [number, number] }> = ({ f, 
 
 const PAY_ICONS = () => [<I.card size={19} color={C.ink} stroke={1.8} />, <I.bank size={19} color={C.ink} stroke={1.8} />, <I.ussd size={19} color={C.ink} />, <I.building size={19} color={C.ink} stroke={1.8} />];
 
-const PayRow: React.FC<{ i: number; sel: number; scale?: number }> = ({ i, sel, scale = 1 }) => {
+export const PayRow: React.FC<{ i: number; sel: number; scale?: number }> = ({ i, sel, scale = 1 }) => {
   const icons = PAY_ICONS();
   return (
     <div style={{ width: 353, height: 57, borderRadius: 14, background: C.white, boxShadow: `inset 0 0 0 ${sel > 0 ? 2 : 1}px ${sel > 0 ? C.linkGreen : C.border}`, display: "flex", alignItems: "center", padding: "0 16px", gap: 12, fontFamily, boxSizing: "border-box", transform: `scale(${scale})` }}>
@@ -441,12 +446,15 @@ const PayRow: React.FC<{ i: number; sel: number; scale?: number }> = ({ i, sel, 
 const REEL_STEP = 66;
 const REEL_TOP = 184; // inside the sheet (sheet top 197 → rows at 381)
 
+const REEL_KEYS: [number, number][] = [[T.s8.reelStart, T.s8.reelTicks.length], ...T.s8.reelTicks.map((t, k): [number, number] => [t, T.s8.reelTicks.length - 1 - k])];
+export const reelPos = monotone(REEL_KEYS);
+
 /** Reads the frame itself so <CameraMotionBlur> can resample it. */
 const Reel: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s8;
   const n = app.pay.methods.length;
-  const pos = mix(n * 4, 0, tw(f, R.reel[0], R.reel[1], 0, 1, EASE.expoOut)); // rows travelled (settles on Card)
+  const pos = reelPos(f); // rows still to travel: crosses an integer exactly on each tick frame, settles on Card
   const sel = tw(f, R.radio[0], R.radio[1], 0, 1, EASE.expoOut);
   const base = Math.floor(pos);
   const rows: React.ReactNode[] = [];
@@ -556,5 +564,105 @@ export const Push: React.FC<{ p: number; from: React.ReactNode; to: React.ReactN
       <div style={{ position: "absolute", inset: 0, transform: `translate${ax}(${(-0.3 * p * dim).toFixed(2)}px)` }}>{from}</div>
       <div style={{ position: "absolute", inset: 0, transform: `translate${ax}(${((1 - p) * dim).toFixed(2)}px)` }}>{to}</div>
     </>
+  );
+};
+
+/* ================================================================== lift-out pieces */
+
+/** The route card's destination row, as a standalone piece (S6 lift-out). Source rect: POS.destCardRow. */
+export const DestRow: React.FC = () => (
+  <div style={{ width: 358, height: 50, borderRadius: 14, background: C.white, boxShadow: `inset 0 0 0 1px ${C.border}`, display: "flex", alignItems: "center", gap: 10, padding: "0 16px", boxSizing: "border-box", fontFamily }}>
+    <div style={{ width: 12, height: 12, borderRadius: 99, border: `3.4px solid ${C.indigo}`, boxSizing: "border-box", flexShrink: 0 }} />
+    <span style={{ fontSize: 13, fontWeight: 600, color: C.ink, flex: 1, whiteSpace: "nowrap" }}>{trip.dropoff}</span>
+    <span style={{ fontSize: 13, fontWeight: 600, color: C.linkGreen }}>{app.map.change}</span>
+  </div>
+);
+
+/* ================================================================== 10 · Your Pod is booked (flat popper) */
+
+const POP = { cone: "#193440", pink: "#FFA9EB", green: "#79EDB1", mint: "#A6F5CD", blue: "#66D1FF", yellow: "#FFDE3D", lilac: "#8E8EF1" };
+
+/**
+ * Rebuilt 10-pod-booked. The party popper is flat shapes only: the cone and ribbons hold still,
+ * and the shapes slide in from the cone's mouth (`shapes` 0 → 1, expoOut by the caller). No particles.
+ */
+export const PodBookedScreen: React.FC<{ shapes: number }> = ({ shapes }) => {
+  const B = app.booked;
+  const k = clamp(shapes);
+  const mouth = { x: 150, y: 330 };
+  const pieces: { x: number; y: number; el: React.ReactNode }[] = [
+    { x: 210, y: 120, el: <path d="M0 0 L22 -4 L18 22 L-2 18 Z" fill={POP.yellow} /> },
+    { x: 300, y: 210, el: <rect width={24} height={24} rx={3} transform="rotate(18)" fill={POP.lilac} /> },
+    { x: 250, y: 168, el: <circle r={22} fill={POP.green} /> },
+    { x: 330, y: 300, el: <path d="M0 -16 L5 -5 L16 0 L5 5 L0 16 L-5 5 L-16 0 L-5 -5 Z" fill={POP.blue} /> },
+    { x: 120, y: 120, el: <path d="M0 0 L18 2 L14 20 L-3 16 Z" fill={POP.yellow} /> },
+    { x: 280, y: 380, el: <rect width={20} height={20} rx={3} transform="rotate(-12)" fill={POP.lilac} /> },
+  ];
+  return (
+    <div style={{ position: "absolute", inset: 0, background: C.white, fontFamily, overflow: "hidden" }}>
+      <svg width={393} height={480} style={{ position: "absolute", left: 0, top: 40 }}>
+        {/* ribbons: still */}
+        <path d="M60 300 C 40 220 110 190 90 120 C 76 70 120 40 150 60" fill="none" stroke={POP.pink} strokeWidth={16} strokeLinecap="round" />
+        <path d="M170 310 C 200 240 260 280 280 220 C 296 170 340 180 360 140" fill="none" stroke={POP.green} strokeWidth={14} strokeLinecap="round" />
+        <path d="M120 360 C 180 360 220 420 300 400" fill="none" stroke={POP.blue} strokeWidth={12} strokeLinecap="round" />
+        {/* shapes slide in from the mouth */}
+        {pieces.map((p, i) => {
+          const q = clamp(k * 1.3 - i * 0.06);
+          const x = mix(mouth.x, p.x, q);
+          const y = mix(mouth.y, p.y, q);
+          return q > 0 ? (
+            <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
+              {p.el}
+            </g>
+          ) : null;
+        })}
+        {/* cone (still), stripes */}
+        <path d="M-30 480 L-60 420 L150 300 L190 360 Z" fill={POP.cone} />
+        <path d="M30 450 L5 400 L50 375 L78 425 Z" fill={POP.green} />
+        <path d="M110 405 L85 355 L120 335 L148 385 Z" fill={POP.mint} />
+      </svg>
+      <div style={{ position: "absolute", right: 22, top: 82 }}>
+        <I.close size={22} color={C.ink} stroke={2} />
+      </div>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 552, textAlign: "center", fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>{B.title}</div>
+      <div style={{ position: "absolute", left: 32, right: 32, top: 592, textAlign: "center", fontSize: 13.5, fontWeight: 500, color: "#5d615f", lineHeight: 1.45 }}>{B.body}</div>
+      <div style={{ position: "absolute", left: 20, top: 748 }}>
+        <Btn label={B.cta} w={353} h={50} style={{ fontSize: 14 }} />
+      </div>
+    </div>
+  );
+};
+
+/* ================================================================== 11 · Finding your Pod */
+
+export const FindingPodScreen: React.FC<{ f: number; progress: number }> = ({ f, progress }) => {
+  const F = app.finding;
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", fontFamily }}>
+      <AppMap f={f} route={1} pin={1} view={{ dx: -40, dy: 40, z: 1.25 }} />
+      <Back white />
+      <div style={{ position: "absolute", left: 17, top: 120, width: 358, height: 40, borderRadius: 12, background: C.white, boxShadow: "0 0 0 1px rgba(16,17,17,.07)", display: "flex", alignItems: "center", gap: 8, padding: "0 12px", boxSizing: "border-box", fontSize: 11.5, fontWeight: 600, color: C.ink }}>
+        <div style={{ width: 11, height: 11, borderRadius: 99, border: `3px solid ${C.priceGreen}`, boxSizing: "border-box" }} />
+        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 130 }}>{trip.pickup}</span>
+        <div style={{ width: 11, height: 11, borderRadius: 99, border: `3px solid ${C.indigo}`, boxSizing: "border-box", marginLeft: 8 }} />
+        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 130 }}>{trip.dropoff}</span>
+      </div>
+      <SheetBox top={468}>
+        <div style={{ position: "absolute", left: 17, top: 36, fontSize: 16, fontWeight: 700, color: C.ink }}>{F.title}</div>
+        <div style={{ position: "absolute", left: 17, right: 30, top: 60, fontSize: 11.5, fontWeight: 500, color: "#5d615f", lineHeight: 1.4 }}>
+          {trip.pickup} → {trip.dropoff}, {F.placeSub}
+        </div>
+        <div style={{ position: "absolute", left: 17, top: 100, width: 358, height: 7, borderRadius: 99, background: "#D4D4D8", overflow: "hidden" }}>
+          <div style={{ width: `${(clamp(progress) * 100).toFixed(2)}%`, height: 7, borderRadius: 99, background: C.priceGreen }} />
+        </div>
+        <div style={{ position: "absolute", left: 17, top: 132, width: 358, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>{F.quoted}</span>
+          <span style={{ fontSize: 19, fontWeight: 700, color: C.priceGreen, fontVariantNumeric: "tabular-nums" }}>{trip.podPrice}</span>
+        </div>
+        <div style={{ position: "absolute", left: 17, top: 196 }}>
+          <Btn label={F.cancel} w={96} h={42} bg={C.card} style={{ fontSize: 13.5 }} />
+        </div>
+      </SheetBox>
+    </div>
   );
 };

@@ -13,33 +13,34 @@ import { POS } from "../screens/Screens";
 
 /* ================================================================== S1 · "Let's get you moving." (0–60) */
 
-const CLOCK = { font: 256, w: 224, h: 330, gap: 22, colon: 86, top: -70 };
+// Digit glyphs 260px tall (Google Sans figures ≈ 0.716em), on real split-flap cards, centred above the line.
+const CLOCK = { font: Math.round(260 / 0.716), w: 286, h: 410, gap: 26, colon: 96, top: 236, lineTop: 236 + 410 + 64 };
 
 export const S1: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s1;
-  const push = 1 + 0.07 * (f / 60); // slow push-in, never still
+  const push = 1 + 0.08 * (f / 60); // slow push-in from f0, never still
   const [hh, m1From, m2From] = [s1.clockFrom[0], s1.clockFrom[2], s1.clockFrom[3]];
   const [m1To, m2To] = [s1.clockTo[2], s1.clockTo[3]];
-  const p1 = tw(f, R.flip[0], R.flip[1] - R.flip2Delay, 0, 1, EASE.linear);
-  const p2 = tw(f, R.flip[0] + R.flip2Delay, R.flip[1], 0, 1, EASE.linear);
+  const p = tw(f, R.flip[0], R.flip[1], 0, 1, EASE.linear);
+  const split = (R.flipLeafSplit - R.flip[0]) / (R.flip[1] - R.flip[0]);
   const total = CLOCK.w * 3 + CLOCK.gap * 2 + CLOCK.colon;
   const x0 = (W - total) / 2;
   return (
     <AbsoluteFill>
       <G1 f={f} />
-      <AbsoluteFill style={{ transform: `scale(${push.toFixed(4)})`, transformOrigin: "960px 260px" }}>
+      <AbsoluteFill style={{ transform: `scale(${push.toFixed(4)})`, transformOrigin: "960px 540px" }}>
         <div style={{ position: "absolute", left: x0, top: CLOCK.top, display: "flex", alignItems: "center", gap: CLOCK.gap }}>
           <FlapDigit from={hh} to={hh} p={0} w={CLOCK.w} h={CLOCK.h} font={CLOCK.font} />
           <div style={{ width: CLOCK.colon - CLOCK.gap, height: CLOCK.h, position: "relative" }}>
-            {[0.36, 0.64].map((y) => (
-              <div key={y} style={{ position: "absolute", left: (CLOCK.colon - CLOCK.gap) / 2 - 15, top: CLOCK.h * y - 15, width: 30, height: 30, borderRadius: 6, background: C.white }} />
+            {[0.34, 0.66].map((y) => (
+              <div key={y} style={{ position: "absolute", left: (CLOCK.colon - CLOCK.gap) / 2 - 17, top: CLOCK.h * y - 17, width: 34, height: 34, borderRadius: 7, background: C.white }} />
             ))}
           </div>
-          <FlapDigit from={m1From} to={m1To} p={p1} w={CLOCK.w} h={CLOCK.h} font={CLOCK.font} />
-          <FlapDigit from={m2From} to={m2To} p={p2} w={CLOCK.w} h={CLOCK.h} font={CLOCK.font} />
+          <FlapDigit from={m1From} to={m1To} p={p} split={split} w={CLOCK.w} h={CLOCK.h} font={CLOCK.font} />
+          <FlapDigit from={m2From} to={m2To} p={p} split={split} w={CLOCK.w} h={CLOCK.h} font={CLOCK.font} />
         </div>
-        <MaskRise f={f} at={R.line} lines={[s1.line]} size={TYPE.title} color={C.white} align="center" style={{ position: "absolute", left: 0, width: W, top: 440 }} />
+        <MaskRise f={f} at={R.line} lines={[s1.line]} size={TYPE.title} color={C.white} align="center" style={{ position: "absolute", left: 0, width: W, top: CLOCK.lineTop }} />
       </AbsoluteFill>
     </AbsoluteFill>
   );
@@ -139,7 +140,7 @@ export const S3: React.FC = () => {
     <AbsoluteFill>
       <G3 f={f} />
       <IntroPod f={f} />
-      <Slice f={f} at={T.s3.line} lines={[s3.line]} size={TYPE.title} style={{ position: "absolute", left: (W - textWidth(s3.line, TYPE.title)) / 2, top: 770 }} />
+      <Slice f={f} lock={T.s3.lineLock} lines={[s3.line]} size={TYPE.word} style={{ position: "absolute", left: (W - textWidth(s3.line, TYPE.word)) / 2, top: 740 }} />
     </AbsoluteFill>
   );
 };

@@ -127,4 +127,10 @@ export const app = {
     cta: "Continue to payment",
   },
   success: { title: "Payment successful", sub: "Your payment went through.", cta: "Done" },
+  booked: {
+    title: "Your Pod is booked",
+    body: "We're finding your Pilot now. You'll see who is coming, and their car, the moment one accepts.",
+    cta: "Okay, got it",
+  },
+  finding: { title: "Finding your Pod", placeSub: "The Rock Drive, Lagos, Nigeria", quoted: "Quoted", cancel: "Cancel" },
 };

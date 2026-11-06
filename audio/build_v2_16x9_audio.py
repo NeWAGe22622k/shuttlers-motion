@@ -38,8 +38,8 @@ PRE_GAIN_DB = 4.0  # drive into the limiter so loudnorm can stay linear
 
 
 def fs(frame):
-    """frame -> sample index"""
-    return int(round(frame * SR / FPS))
+    """frame -> sample index: round(frame * 1600) at 48 kHz / 30 fps (beat n = frame 15n = sample 24000n)"""
+    return int(round(frame * 1600))
 
 
 def tsec(n):
@@ -101,9 +101,9 @@ def kick():
 def clap():
     n = int(0.35 * SR)
     x = np.zeros(n)
-    for d in (0.0, 0.009, 0.019):
+    for d in (0.0, 0.006, 0.012):  # tight flam: one transient to the ear and to onset detection
         k = int(d * SR)
-        burst = noise(n - k) * env_exp(n - k, 0.006 if d < 0.019 else 0.13)
+        burst = noise(n - k) * env_exp(n - k, 0.006 if d < 0.012 else 0.13)
         x[k:] += burst
     return bp(x, 900, 2600) * 0.9
 
@@ -221,11 +221,25 @@ def sfx_door():
     t = tsec(n)
     thump = np.sin(2 * np.pi * (55 + 30 * np.exp(-t / 0.02)) * t) * env_exp(n, 0.07)
     latch = np.zeros(n)
-    for d, g in ((0.012, 1.0), (0.041, 0.6)):
+    for d, g in ((0.010, 1.0),):  # one latch click, 10 ms into the thump (a single transient)
         k = int(d * SR)
         m = int(0.012 * SR)
         latch[k : k + m] += bp(noise(m), 2000, 4500) * env_exp(m, 0.003) * g
     return np.tanh(1.3 * (0.9 * thump + 0.6 * latch))
+
+
+def sfx_tock():
+    """Pin landing: a short wood-block knock (mid-range, no sub: never a second kick)."""
+    n = int(0.08 * SR)
+    t = tsec(n)
+    body = np.sin(2 * np.pi * 820 * t) * env_exp(n, 0.018) + 0.5 * np.sin(2 * np.pi * 1640 * t) * env_exp(n, 0.01)
+    click = hp(noise(n), 3000) * env_exp(n, 0.0015) * 0.4
+    return (body + click) * 0.7
+
+
+def crash(dur=1.1):
+    n = int(dur * SR)
+    return hp(noise(n), 5000, 2) * env_exp(n, 0.35) * np.minimum(1, tsec(n) / 0.001) * 0.35
 
 
 def sfx_tick(freq=3200):
@@ -275,18 +289,36 @@ CHORDS = [  # one per bar, A minor: Fmaj9 -> G6 -> Em7 -> Am9
     {"root": midi(40), "pad": [midi(m) for m in (52, 55, 59, 62)]},  # E G B D
     {"root": midi(45), "pad": [midi(m) for m in (57, 60, 64, 67, 71)]},  # A C E G B
 ]
-BAR_S = int(round(4 * BEAT * SR))  # 96000
-STEP_S = BAR_S // 16
+BEAT_S = 24000  # beat n starts at sample n*24000 (frame n*15)
+BAR_S = 4 * BEAT_S
+STEP_S = BEAT_S // 4
+assert SR == 48000 and FPS == 30 and T["bpm"] == 120
+
+ON = A["onGrid"]
+OFF = A["offbeat"]
+OFFBEAT_CUES = sorted(f for v in OFF.values() for f in v)
+CLEAR = int(0.060 * SR)  # the groove drops any non-beat event this close to an offbeat cue
+
+
+def check_grid():
+    bad = [(k, f) for k, v in ON.items() for f in v if f % T["beat"] != 0]
+    bad += [("keysOnGrid", f) for f in A["keysOnGrid"] if f % T["beat"]] + [("reelOnGrid", f) for f in A["reelOnGrid"] if f % T["beat"]]
+    if bad:
+        sys.exit(f"onGrid cues off the beat grid: {bad}")
 
 
 def step_at(bar, step):
-    """sample index of a 16th, with 56% swing on the off-16ths"""
+    """sample of a 16th: beats exactly on the grid, off-16ths swung to 56%"""
     pair = step // 2
     off = step % 2
     return bar * BAR_S + pair * 2 * STEP_S + (int(round(SWING * 2 * STEP_S)) if off else 0)
 
 
-KICK = [0, 4, 8, 12]
+def near_offbeat(at):
+    return any(abs(at - fs(c)) < CLEAR for c in OFFBEAT_CUES)
+
+
+KICK = [0, 4, 8, 12]  # four on the floor: every beat of the groove has exactly one kick
 CLAP = [4, 12]
 LOG = [(3, 0), (6, 0), (10, 7), (11, 0), (14, 12)]  # (step, semitone offset)
 PLUCK_STEPS = [0, 3, 6, 8, 11, 14]
@@ -302,10 +334,24 @@ def sections(frame):
         return "thin"
     if frame < A["backIn"]:
         return "halt"
+    if frame > A["drumsOutAfter"]:
+        return "out"
     return "full"
 
 
+KICKS_PLACED = []  # sample positions of every groove kick (for the onset check)
+
+
+def accent(music, drums, sfx, frame, big=False):
+    """Accent on a beat that already has the groove's kick: stab + clap + crash only, never another kick."""
+    at = fs(frame)
+    place(music, stab(CHORDS[(at // BAR_S) % 4]["pad"], 0.3 if big else 0.22), at, 0.45)
+    place(drums, clap(), at, 0.45, pan=0.05)
+    place(sfx, crash(1.4 if big else 0.8), at, 0.8 if big else 0.5, pan=-0.1)
+
+
 def build():
+    check_grid()
     drums = np.zeros((N, 2))
     bass = np.zeros((N, 2))
     music = np.zeros((N, 2))
@@ -314,47 +360,43 @@ def build():
     n_bars = int(np.ceil(N / BAR_S))
     for bar in range(n_bars):
         ch = CHORDS[bar % 4]
-        # pad: every bar, sustained, through everything but the halt
         pad_n = BAR_S + int(0.3 * SR)
         start = bar * BAR_S
         f0 = start * FPS / SR
         if sections(f0) != "halt":
-            cutoff = 2200
-            if f0 < A["drop"]:
-                cutoff = 280  # build opens below
-            pad = chord_tone(ch["pad"], pad_n, cutoff=cutoff, voices=3)
+            pad = chord_tone(ch["pad"], pad_n, cutoff=280 if f0 < A["drop"] else 2200, voices=3)
             pad *= np.minimum(1, tsec(pad_n) / 0.08) * np.minimum(1, (pad_n - np.arange(pad_n)) / (0.3 * SR))
             place(music, pad, start, 0.22, pan=-0.15)
         elif (bar + 1) * BAR_S > fs(A["backIn"]):
-            # the bar the beat comes back in: the pad re-enters exactly on f630
             rest = (bar + 1) * BAR_S - fs(A["backIn"]) + int(0.3 * SR)
             pad = chord_tone(ch["pad"], rest, cutoff=2200, voices=3) * np.minimum(1, (rest - np.arange(rest)) / (0.3 * SR))
             place(music, pad, fs(A["backIn"]), 0.22, pan=-0.15)
-        for s in range(16):
-            at = step_at(bar, s)
+        for s_ in range(16):
+            at = step_at(bar, s_)
+            if at >= N:
+                continue
             fr = at * FPS / SR
             sec = sections(fr)
-            if fr >= A["drumsOutAfter"] and fr < DUR_F:
-                sec = "out"
-            if sec in ("build", "halt"):
+            if sec in ("build", "halt", "out"):
                 continue
-            # shakers: 16ths everywhere the groove plays (also in the thin section)
-            if sec in ("full", "thin"):
-                place(drums, shaker(1.0 if s % 4 == 2 else 0.6), at, 0.9, pan=0.35 if s % 2 else 0.2)
+            on_beat = s_ % 4 == 0
+            if not on_beat and near_offbeat(at):
+                continue  # leave room for an offbeat cue (keys, reel ticks, blinks)
+            place(drums, shaker(1.0 if s_ % 4 == 2 else 0.6), at, 0.9, pan=0.35 if s_ % 2 else 0.2)
             if sec != "full":
                 continue
-            if s in KICK:
+            if s_ in KICK:
                 place(drums, K, at, 0.9)
-            if s in CLAP:
+                KICKS_PLACED.append(at)
+            if s_ in CLAP:
                 place(drums, CL, at, 0.5, pan=-0.05)
             for st, semi in LOG:
-                if s == st:
+                if s_ == st:
                     place(bass, log_drum(ch["root"] * 2 ** (semi / 12)), at, 0.75)
-            if s in PLUCK_STEPS and fr >= 150:
+            if s_ in PLUCK_STEPS and fr >= 150:
                 tones = ch["pad"]
-                fq = tones[(s + bar) % len(tones)] * 2
-                place(music, pluck(fq, 0.45, 0.4), at, 0.16, pan=0.4 if s % 3 else -0.3)
-    # build: the pad's filter opens 280 Hz -> 4 kHz over f0-60, plus a riser
+                place(music, pluck(tones[(s_ + bar) % len(tones)] * 2, 0.45, 0.4), at, 0.16, pan=0.4 if s_ % 3 else -0.3)
+    # build: the pad's filter opens 280 Hz -> 4 kHz over f0-60, plus a riser into the drop
     b0, b1 = fs(A["build"][0]), fs(A["build"][1])
     n = b1 - b0
     raw = chord_tone(CHORDS[0]["pad"], n, cutoff=12000, voices=3)
@@ -366,55 +408,41 @@ def build():
         out[i : i + chunk] = lp(seg, fc)[-len(out[i : i + chunk]) :]
     place(music, out * np.linspace(0.5, 1, n), b0, 0.3)
     place(sfx, sfx_riser(A["drop"] - A["build"][0]), b0, 0.5)
-    # hits (drop words, Pod Solo), stabs on the step numerals, the last hit, the final hit
-    hits = [A["drop"]] + A["hits"]
-    for h in hits:
-        place(sfx, impact(), fs(h), 0.55 if h != A["drop"] else 0.8)
-        place(music, stab(CHORDS[(fs(h) // BAR_S) % 4]["pad"]), fs(h), 0.4)
-    for h in A["stabs"]:
+    # accents on kick beats: stab + clap + crash, no extra kick
+    for h in ON["hits"]:
+        accent(music, drums, sfx, h, big=h == A["drop"])
+    for h in ON["stabs"]:
         place(music, stab([f * 2 for f in CHORDS[(fs(h) // BAR_S) % 4]["pad"]]), fs(h), 0.45, pan=0.1)
-    place(sfx, impact(), fs(A["lastHit"]), 0.7)
-    place(music, stab(CHORDS[3]["pad"], 0.4), fs(A["lastHit"]), 0.45)
-    place(sfx, impact(), fs(A["finalHit"]), 0.85)
-    place(music, stab(CHORDS[0]["pad"], 0.5), fs(A["finalHit"]), 0.5)
-    place(sfx, impact(), fs(A["backIn"]), 0.6)
+    accent(music, drums, sfx, ON["backIn"][0], big=True)
+    accent(music, drums, sfx, ON["finalHit"][0], big=True)
+    # the last hit (f555) lands in the thin section, which has no groove kick: it gets the one kick on that beat
+    place(drums, kick(), fs(ON["lastHit"][0]), 1.0)
+    KICKS_PLACED.append(fs(ON["lastHit"][0]))
+    place(sfx, crash(1.6), fs(ON["lastHit"][0]), 0.7)
+    place(music, stab(CHORDS[3]["pad"], 0.4), fs(ON["lastHit"][0]), 0.45)
     # swell under the flood (f645-690)
     s0, s1 = fs(A["swell"][0]), fs(A["swell"][1])
     sw = chord_tone([f * 2 for f in CHORDS[2]["pad"]], s1 - s0, cutoff=3000, voices=4) * np.linspace(0, 1, s1 - s0) ** 2
     place(music, sw, s0, 0.35)
     place(sfx, sfx_riser(A["swell"][1] - A["swell"][0]), s0, 0.25)
-    # accent plucks for the three "Catch" beats
-    for i, p in enumerate(A["plucks"]):
+    for i, p in enumerate(ON["plucks"]):
         place(music, pluck(midi(76 + [0, 3, 7][i]), 0.9, 0.9), fs(p), 0.45, pan=0.2)
-    # SFX cues
-    for c in A["clack"]:
+    # cues
+    for c in ON["clack"] + OFF["clack"]:
         place(sfx, sfx_clack(), fs(c), 0.8, pan=0.1)
-    for w in A["wipes"]:
+    for w in OFF["wipes"]:  # swells that peak on the beat
         place(sfx, sfx_wipe(), fs(w), 0.6)
-    for tp in A["taps"]:
+    for tp in ON["taps"]:
         place(sfx, sfx_tap(), fs(tp), 0.7, pan=-0.3)
-    # typing: one key click per letter of the query (same spacing as the picture)
-    t0, t1 = T["s6"]["type"]
-    q = 9
-    for k in range(q):
-        place(sfx, sfx_key(), fs(t0 + k * (t1 - t0) / (q - 1)), 0.6, pan=-0.3)
-    # slot reel: one tick per row passing the window (the reel settles on Card with expoOut)
-    r0, r1 = A["reelTicks"]
-    rows = 16
-    last = rows
-    for fr10 in range(r0 * 10, r1 * 10 + 1):
-        fr = fr10 / 10
-        u = (fr - r0) / (r1 - r0)
-        e = expo_out(u)
-        pos = rows * (1 - e)
-        if int(np.ceil(pos)) < last:
-            last = int(np.ceil(pos))
-            place(sfx, sfx_tick(2600), fs(fr), 0.45, pan=-0.2)
-    place(sfx, sfx_thud(), fs(A["thud"]), 0.9)
-    place(sfx, sfx_tick(4200), fs(A["blinkTick"]), 0.5)
-    place(sfx, sfx_door(), fs(A["door"]), 0.9)
-    place(sfx, sfx_whoosh(A["whoosh"][1] - A["whoosh"][0]), fs(A["whoosh"][0]), 0.8)
-    for tk in A["endTicks"]:
+    for k in sorted(OFF["keys"] + A["keysOnGrid"]):
+        place(sfx, sfx_key(), fs(k), 0.6, pan=-0.3)
+    for r in sorted(OFF["reel"] + A["reelOnGrid"]):
+        place(sfx, sfx_tick(2600), fs(r), 0.45, pan=-0.2)
+    place(sfx, sfx_tock(), fs(ON["pin"][0]), 0.9)
+    for b in OFF["blinks"]:
+        place(sfx, sfx_tick(4200), fs(b), 0.5)
+    place(sfx, sfx_whoosh(A["whooshLen"]), fs(ON["whoosh"][0]), 0.8)
+    for tk in ON["endTicks"]:
         place(sfx, sfx_tick(3600), fs(tk), 0.6)
     return drums, bass, music, sfx
 
@@ -510,12 +538,105 @@ def loudnorm(x):
     return y[:N], info
 
 
+# ------------------------------------------------------------------ onset analysis of the final mix
+
+def _zp(x, sos):
+    from scipy.signal import sosfiltfilt
+
+    return sosfiltfilt(sos, x)
+
+
+def detect_kicks(mono):
+    """Kick onsets by normalised cross-correlation with the kick waveform in the low band (<200 Hz):
+    sample-precise. A kick is a correlation peak >= 0.8, at least 200 ms from the next."""
+    sos = butter(4, 200, btype="low", fs=SR, output="sos")
+    x = _zp(mono, sos)
+    tpl = _zp(np.concatenate([kick(), np.zeros(256)]), sos)[: int(0.06 * SR)]
+    tpl = tpl - tpl.mean()
+    corr = fftconvolve(x, tpl[::-1], mode="full")[len(tpl) - 1 :]
+    energy = fftconvolve(x**2, np.ones(len(tpl)), mode="full")[len(tpl) - 1 :]
+    rho = corr / (np.sqrt(np.maximum(energy, 1e-12)) * np.linalg.norm(tpl))
+    out = []
+    i = 0
+    while i < len(rho):
+        if rho[i] >= 0.8:
+            j = i + int(np.argmax(rho[i : i + int(0.02 * SR)]))
+            out.append(j)
+            i = j + int(0.2 * SR)
+        else:
+            i += 1
+    return np.array(out)
+
+
+def onset_envelope(mono, n_fft=1024, hop=96):
+    """SuperFlux spectral flux (log magnitude, frequency max-filter on the reference frame)."""
+    from scipy.ndimage import maximum_filter1d
+
+    pad = np.concatenate([np.zeros(n_fft // 2), mono, np.zeros(n_fft // 2)])
+    n_frames = 1 + (len(pad) - n_fft) // hop
+    win = np.hanning(n_fft)
+    idx = np.arange(n_fft)[None, :] + hop * np.arange(n_frames)[:, None]
+    mag = np.abs(np.fft.rfft(pad[idx] * win, axis=1))
+    L = np.log1p(100 * mag)
+    ref = maximum_filter1d(L, size=3, axis=1)
+    flux = np.maximum(0, L[1:] - ref[:-1]).sum(axis=1)
+    flux = np.concatenate([[0], flux])
+    return flux / max(1e-9, flux.max()), hop
+
+
+def detect_transients(mono):
+    """librosa-style peak picking on the onset envelope: local max over the past 30 ms, above the
+    ±100 ms mean by 0.07, then a 20 ms wait. Returns onset sample positions."""
+    o, hop = onset_envelope(mono)
+    fr = lambda sec: max(1, int(round(sec * SR / hop)))
+    pre_max, pre_avg, post_avg, wait = fr(0.03), fr(0.1), fr(0.1), fr(0.02)
+    peaks = []
+    last = -10**9
+    for t in range(1, len(o) - 1):
+        if o[t] < o[t - 1] or o[t] < o[t + 1]:
+            continue
+        if o[t] < o[max(0, t - pre_max) : t + 1].max():
+            continue
+        if o[t] < o[max(0, t - pre_avg) : t + post_avg + 1].mean() + 0.07:
+            continue
+        if t - last < wait:
+            continue
+        peaks.append(t)
+        last = t
+    return np.array(peaks) * hop
+
+
+def onset_report(y):
+    mono = y.mean(axis=1)
+    kicks = detect_kicks(mono)
+    # every groove kick must be found within +-1 ms of n*0.5 s
+    errs = []
+    for k in KICKS_PLACED:
+        assert k % BEAT_S == 0, f"groove kick off the grid at sample {k}"
+        near = kicks[np.argmin(np.abs(kicks - k))] if len(kicks) else -10**9
+        errs.append((near - k) / SR * 1000)
+    errs = np.array(errs)
+    tr = detect_transients(mono)
+    gaps = np.diff(tr) / SR * 1000
+    close = [(round(float(tr[i]) / SR * FPS, 2), round(float(gaps[i]), 1)) for i in np.where(gaps < 50)[0]]
+    return {
+        "kicks_expected": len(KICKS_PLACED),
+        "kick_err_ms_max": float(np.max(np.abs(errs))) if len(errs) else 0.0,
+        "kicks_off": [round(KICKS_PLACED[i] / SR * FPS, 1) for i in np.where(np.abs(errs) > 1.0)[0]],
+        "transients": len(tr),
+        "min_gap_ms": float(gaps.min()) if len(gaps) else 0.0,
+        "close": close,
+        "kicks_detected": int(len(kicks)),
+        "kicks_detected_off_grid": [round(float(k) / SR * FPS, 2) for k in kicks if abs(k - round(k / BEAT_S) * BEAT_S) > SR / 1000],
+    }
+
+
 def main():
     drums, bass, music, sfx = build()
     ir = reverb_ir()
     music = apply_reverb(music, ir, 0.35)
     drums = drums + 0.12 * np.stack([fftconvolve(drums[:, c], ir[:, c])[:N] for c in range(2)], axis=1)
-    duck = duck_env([A["drop"]] + A["hits"] + A["stabs"] + [A["lastHit"], A["backIn"], A["finalHit"]])
+    duck = duck_env(ON["hits"] + ON["stabs"] + ON["lastHit"] + ON["backIn"] + ON["finalHit"])
     music *= duck[:, None]
     bass *= duck[:, None]
     # drums out after f870 (already not triggered); short tail to 900 on everything
@@ -524,7 +645,7 @@ def main():
     sfx = apply_reverb(sfx, ir, 0.12)
     halt(sfx)
     # the door click is the only sound in the halt (f590); dry, it has its own tail
-    place(sfx, sfx_door(), fs(A["door"]), 0.9)
+    place(sfx, sfx_door(), fs(OFF["door"][0]), 0.9)
     tail = int(0.12 * SR)
     mix = drums + bass + music + sfx
     mix[-tail:] *= np.linspace(1, 0, tail)[:, None]
@@ -533,7 +654,7 @@ def main():
         sf.write(os.path.join(STEMS, f"{name}.wav"), np.clip(st / max(1.0, np.max(np.abs(st)) * 1.05), -1, 1), SR, subtype="PCM_24")
     pre = limiter(mix / max(1e-9, np.max(np.abs(mix))) * 10 ** (PRE_GAIN_DB / 20), ceiling_db=-2.0)
     out, info = loudnorm(pre)
-    a, b = fs(A["halt"]), fs(A["door"])
+    a, b = fs(A["halt"]), fs(OFF["door"][0])
     out[a:b] = np.where(np.abs(out[a:b]) < 10 ** (-90 / 20), 0, out[a:b])
     path = os.path.join(OUT, "score-v2.wav")
     sf.write(path, out, SR, subtype="PCM_24")
@@ -545,14 +666,14 @@ def main():
         problems.append(f"format {sr} {y.shape}")
     if np.max(np.abs(y)) >= 1.0:
         problems.append("clipping")
-    sil = 20 * np.log10(max(1e-12, np.max(np.abs(y[fs(A['halt']) : fs(A['door'])]))))
+    sil = 20 * np.log10(max(1e-12, np.max(np.abs(y[fs(A['halt']) : fs(OFF['door'][0])]))))
     if sil > -60:
         problems.append(f"f570-590 not silent ({sil:.1f} dBFS)")
     # cues: the sharpest attack in the SFX stem within +-1.5 frames of each cue must sit within +-1 frame of it
     s, _ = sf.read(os.path.join(STEMS, "sfx.wav"), dtype="float64")
     env = np.convolve(np.abs(s).max(axis=1), np.ones(48) / 48, mode="same")  # 1 ms envelope
     rise = np.diff(env, prepend=env[0])
-    cues = A["taps"] + A["clack"] + [A["thud"], A["door"], A["blinkTick"], A["finalHit"]] + A["endTicks"]
+    cues = ON["taps"] + ON["clack"] + OFF["clack"] + ON["pin"] + OFF["door"] + OFF["blinks"] + ON["endTicks"]
     late = []
     for c in cues:
         w0, w1 = fs(c - 1.5), fs(c + 1.5)
@@ -564,6 +685,17 @@ def main():
     print(f"wrote {os.path.relpath(path, ROOT)}  {N / SR:.3f}s  {SR} Hz 24-bit stereo")
     print(f"  loudnorm out: I={info.get('output_i')} LUFS  TP={info.get('output_tp')} dBTP  LRA={info.get('output_lra')}  ({info.get('normalization_type')})")
     print(f"  peak {20 * np.log10(np.max(np.abs(y))):.2f} dBFS · f570-590 max {sil:.1f} dBFS · {len(cues)} cues checked")
+    rep = onset_report(y)
+    print(f"  onsets: {rep['kicks_expected']} groove kicks, max error {rep['kick_err_ms_max']:.3f} ms (limit 1 ms); "
+          f"{rep['transients']} transients, min gap {rep['min_gap_ms']:.1f} ms (limit 50 ms)")
+    print(f"  kick detector: {rep['kicks_detected']} kick-shaped onsets found, {len(rep['kicks_detected_off_grid'])} off the grid")
+    if rep["kicks_detected_off_grid"]:
+        problems.append(f"kick-shaped onsets off the grid at frames {rep['kicks_detected_off_grid']}")
+    if rep["kicks_off"]:
+        problems.append(f"kicks off the grid by >1 ms at frames {rep['kicks_off']}")
+    if rep["close"]:
+        problems.append(f"transients closer than 50 ms at (frame, gap ms) {rep['close']}")
+    json.dump(rep, open(os.path.join(STEMS, "..", "onset-report.json"), "w"), indent=1)
     if problems:
         print("FAILED:", "; ".join(problems))
         sys.exit(1)
