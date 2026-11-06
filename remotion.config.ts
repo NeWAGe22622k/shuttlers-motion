@@ -1,7 +1,15 @@
+import fs from "node:fs";
 import { Config } from "@remotion/cli/config";
 
 Config.setVideoImageFormat("jpeg");
 Config.setJpegQuality(95);
 Config.setConcurrency(4);
-// Chrome Headless Shell can't be downloaded in this sandbox; use the pre-installed one.
-Config.setBrowserExecutable(process.env.REMOTION_CHROME ?? "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell");
+// Chrome Headless Shell can't be downloaded in this sandbox; use the pre-installed one
+// (whichever Playwright build is present), or REMOTION_CHROME if set.
+const candidates = [
+  process.env.REMOTION_CHROME,
+  "/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell",
+  "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+].filter((p): p is string => Boolean(p));
+const found = candidates.find((p) => fs.existsSync(p));
+if (found) Config.setBrowserExecutable(found);

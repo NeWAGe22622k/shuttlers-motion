@@ -1,0 +1,427 @@
+{
+ "_doc": "PodVideo2-16x9 (How to book Pod Solo, Pod Now). 30fps, 900f. BPM 120 \u2192 BEAT 15f, BAR 60f. Every frame number the film and the score use lives here (read by src/pod2 and audio/build_v2_16x9_audio.py).",
+ "fps": 30,
+ "duration": 900,
+ "bpm": 120,
+ "beat": 15,
+ "bar": 60,
+ "scenes": {
+  "s1": [
+   0,
+   60
+  ],
+  "s2": [
+   60,
+   120
+  ],
+  "s3": [
+   120,
+   150
+  ],
+  "s4": [
+   150,
+   180
+  ],
+  "s5": [
+   180,
+   270
+  ],
+  "s6": [
+   270,
+   360
+  ],
+  "s7": [
+   360,
+   450
+  ],
+  "s8": [
+   450,
+   510
+  ],
+  "s9": [
+   510,
+   570
+  ],
+  "s10": [
+   570,
+   630
+  ],
+  "s11": [
+   630,
+   690
+  ],
+  "s12": [
+   690,
+   780
+  ],
+  "s13": [
+   780,
+   840
+  ],
+  "s14": [
+   840,
+   900
+  ]
+ },
+ "transitions": {
+  "wipe": [
+   60,
+   150,
+   840
+  ],
+  "wipeDur": 12,
+  "maskGrowPodTile": [
+   180,
+   192
+  ],
+  "maskGrowEye": [
+   540,
+   555
+  ],
+  "maskGrowPodMarker": [
+   630,
+   642
+  ],
+  "hardCuts": [
+   120,
+   510,
+   570,
+   780
+  ]
+ },
+ "s1": {
+  "flip": [
+   10,
+   22
+  ],
+  "flipLeafSplit": 16,
+  "flip2Delay": 2,
+  "line": 24
+ },
+ "s2": {
+  "words": [
+   62,
+   75,
+   90
+  ],
+  "sweep": [
+   96,
+   106
+  ]
+ },
+ "s3": {
+  "arc": [
+   120,
+   134
+  ],
+  "seat": [
+   128,
+   136
+  ],
+  "line": 124
+ },
+ "s4": {
+  "line": 152,
+  "travel": [
+   165,
+   180
+  ]
+ },
+ "phone": {
+  "in": 180,
+  "out": 510
+ },
+ "s5": {
+  "numeral": 182,
+  "line": 186,
+  "pulses": [
+   195,
+   210,
+   225
+  ],
+  "pulseDraw": 7,
+  "tap": 240,
+  "push": [
+   250,
+   260
+  ]
+ },
+ "s6": {
+  "numeral": 270,
+  "line": 272,
+  "locateRing": [
+   272,
+   285
+  ],
+  "tapDest": 285,
+  "searchPush": [
+   285,
+   295
+  ],
+  "type": [
+   293,
+   314
+  ],
+  "refreshAt": [
+   1,
+   4
+  ],
+  "refreshDur": 6,
+  "tapResult": 315,
+  "loading": [
+   316,
+   322
+  ],
+  "mapPush": [
+   322,
+   330
+  ],
+  "pinDrop": [
+   324,
+   330
+  ],
+  "pinRing": [
+   330,
+   344
+  ],
+  "thud": 330,
+  "route": [
+   332,
+   352
+  ]
+ },
+ "s7": {
+  "numeral": 360,
+  "line": 362,
+  "rows": [
+   360,
+   380
+  ],
+  "rowStagger": 3,
+  "roll": [
+   366,
+   384
+  ],
+  "tapPodSolo": 390,
+  "selWipe": [
+   390,
+   398
+  ],
+  "tapContinue": 420,
+  "fare": [
+   425,
+   437
+  ],
+  "maxPayRoll": [
+   432,
+   448
+  ]
+ },
+ "s8": {
+  "numeral": 450,
+  "line": 452,
+  "sheet": [
+   452,
+   464
+  ],
+  "reel": [
+   452,
+   478
+  ],
+  "reelBlur": [
+   452,
+   470
+  ],
+  "tapCard": 480,
+  "radio": [
+   480,
+   484
+  ],
+  "success": [
+   490,
+   500
+  ],
+  "check": [
+   494,
+   506
+  ]
+ },
+ "s9": {
+  "blink": [
+   525,
+   533
+  ],
+  "black": [
+   555,
+   570
+  ]
+ },
+ "s10": {
+  "roads": [
+   570,
+   582
+  ],
+  "headlights": 576,
+  "line": 580,
+  "door": 590
+ },
+ "s11": {
+  "seat": [
+   632,
+   640
+  ],
+  "flood": [
+   645,
+   659
+  ],
+  "line": 640
+ },
+ "s12": {
+  "beats": [
+   690,
+   720,
+   750
+  ],
+  "phoneRock": [
+   690,
+   705
+  ],
+  "napClose": [
+   722,
+   732
+  ],
+  "breathDraw": [
+   752,
+   764
+  ],
+  "glide": [
+   766,
+   780
+  ]
+ },
+ "s13": {
+  "outline": [
+   780,
+   788
+  ],
+  "settle": [
+   780,
+   790
+  ],
+  "line": 790,
+  "pull": [
+   790,
+   840
+  ]
+ },
+ "s14": {
+  "mark": 842,
+  "line": 848,
+  "tags": [
+   860,
+   868,
+   876
+  ],
+  "push": [
+   876,
+   900
+  ]
+ },
+ "taps": [
+  240,
+  285,
+  315,
+  390,
+  420,
+  480
+ ],
+ "finger": {
+  "lead": 9,
+  "windows": [
+   [
+    228,
+    326
+   ],
+   [
+    380,
+    430
+   ],
+   [
+    470,
+    490
+   ]
+  ]
+ },
+ "audio": {
+  "sampleRate": 48000,
+  "build": [
+   0,
+   60
+  ],
+  "clack": [
+   15,
+   17,
+   20,
+   22
+  ],
+  "drop": 60,
+  "hits": [
+   62,
+   75,
+   90,
+   124
+  ],
+  "stabs": [
+   182,
+   270,
+   360,
+   450
+  ],
+  "taps": [
+   240,
+   285,
+   315,
+   390,
+   420,
+   480
+  ],
+  "reelTicks": [
+   452,
+   478
+  ],
+  "wipes": [
+   54,
+   144,
+   834
+  ],
+  "thud": 330,
+  "thinFrom": 510,
+  "blinkTick": 529,
+  "lastHit": 555,
+  "halt": 570,
+  "door": 590,
+  "backIn": 630,
+  "swell": [
+   645,
+   690
+  ],
+  "plucks": [
+   690,
+   720,
+   750
+  ],
+  "whoosh": [
+   780,
+   812
+  ],
+  "finalHit": 840,
+  "endTicks": [
+   860,
+   868,
+   876
+  ],
+  "drumsOutAfter": 870,
+  "end": 900,
+  "_doc": "Audio cue frames (read by audio/build_v2_16x9_audio.py). clack = the split-flap leaves landing (top leaf, bottom leaf per minute digit)."
+ }
+}
