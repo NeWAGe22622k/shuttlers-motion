@@ -10,6 +10,7 @@ import { PodAt } from "./components/Pod";
 import { FillSweep, MaskRise, Slice } from "./components/type";
 import { FareSheet, HomeScreen, OptionsScreen, PayScreen, PlanScreen, SearchScreen, SuccessScreen } from "./screens/Screens";
 import { AppMap } from "./screens/AppMap";
+import { trip } from "./config/content";
 
 /**
  * Components-Preview-V2. Page 1 (f0–59): every component in every state. Page 2 (f60–119): every
@@ -87,7 +88,7 @@ const Page1: React.FC<{ f: number }> = ({ f }) => (
       ))}
     </div>
     <div style={{ position: "absolute", left: 1300, top: 230 }}>
-      <RollText text="₦2,903.17" f={f % 30} a={0} b={20} size={56} color={C.priceGreen} />
+      <RollText text={trip.maxPay} f={f % 30} a={0} b={20} size={56} color={C.priceGreen} />
     </div>
     {/* type reveals, mid-flight and landed */}
     <MaskRise f={f % 30} at={0} lines={["maskRise words"]} size={56} style={{ position: "absolute", left: 1300, top: 330 }} />
@@ -106,11 +107,11 @@ const Page1: React.FC<{ f: number }> = ({ f }) => (
 );
 
 const Page2: React.FC<{ f: number }> = ({ f }) => {
-  const opts = { rows: 1, rowIn: [1, 1, 1], sel: 1, border: 1, rowPress: 1, contPress: 1, roll: [0, 1] as [number, number] };
+  const opts = { dailyIn: 1, rowIn: [1, 1, 1], rowPress: 1, contPress: 1, contReady: true, roll: [0, 1] as [number, number] };
   const screens: [string, React.ReactNode][] = [
     ["01 home", <HomeScreen pulse={0.3} />],
     ["02 plan", <PlanScreen locateRing={0.4} />],
-    ["03 search", <SearchScreen f={f} letters={9} caret refresh={1} refreshFrom={0} />],
+    ["03 search", <SearchScreen letters={6} caret refresh={1} />],
     ["05/06 options", <OptionsScreen f={f} route={1} pin={1} pinRing={0} st={opts} />],
     [
       "07 fare",

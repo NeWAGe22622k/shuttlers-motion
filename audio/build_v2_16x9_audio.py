@@ -114,7 +114,7 @@ def shaker(vel=1.0):
     return hp(noise(n), 6500, 4) * a * env_exp(n, 0.018) * 0.35 * vel
 
 
-def log_drum(freq, dur=0.5):
+def log_drum(freq, dur=1.2):
     """Amapiano log drum: starts +7 semitones up and drops to pitch in 60 ms, 350 ms decay, tanh."""
     n = int(dur * SR)
     t = tsec(n)
@@ -123,7 +123,10 @@ def log_drum(freq, dur=0.5):
     ph = 2 * np.pi * np.cumsum(f) / SR
     x = np.sin(ph) + 0.35 * np.sin(2 * ph) + 0.12 * np.sin(3 * ph)
     x *= env_exp(n, 0.35) * np.minimum(1, t / 0.003)
-    return np.tanh(2.6 * x) * 0.55
+    y = np.tanh(2.6 * x) * 0.55
+    tail = int(0.15 * SR)
+    y[-tail:] *= np.linspace(1, 0, tail) ** 2  # the note ends in silence: no truncation click
+    return y
 
 
 def saw(freq, n, detune=0.0):
@@ -317,7 +320,7 @@ CLEAR = int(0.060 * SR)  # the groove drops any non-beat event this close to an 
 
 def check_grid():
     bad = [(k, f) for k, v in ON.items() for f in v if f % T["beat"] != 0]
-    bad += [("keysOnGrid", f) for f in A["keysOnGrid"] if f % T["beat"]] + [("reelOnGrid", f) for f in A["reelOnGrid"] if f % T["beat"]]
+    bad += [("keysOnGrid", f) for f in A["keysOnGrid"] if f % T["beat"]]
     if bad:
         sys.exit(f"onGrid cues off the beat grid: {bad}")
 
@@ -394,7 +397,7 @@ def build():
                 continue
             on_beat = s_ % 4 == 0
             if not on_beat and near_offbeat(at):
-                continue  # leave room for an offbeat cue (keys, reel ticks, blinks)
+                continue  # leave room for an offbeat cue (keys, blinks, door, end ticks)
             place(drums, shaker(1.0 if s_ % 4 == 2 else 0.6), at, 0.9, pan=0.35 if s_ % 2 else 0.2)
             if sec != "full":
                 continue
@@ -444,8 +447,6 @@ def build():
         place(sfx, sfx_tap(), fs(tp), 0.7, pan=-0.3)
     for k in sorted(OFF["keys"] + A["keysOnGrid"]):
         place(sfx, sfx_key(), fs(k), 0.6, pan=-0.3)
-    for r in sorted(OFF["reel"] + A["reelOnGrid"]):
-        place(sfx, sfx_tick(2600), fs(r), 0.45, pan=-0.2)
     place(sfx, sfx_tock(), fs(ON["pin"][0]), 0.9)
     # the door click sits on top of the music (f700)
     place(sfx, sfx_door(), fs(OFF["door"][0]), 0.9)

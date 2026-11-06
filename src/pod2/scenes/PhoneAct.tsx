@@ -3,17 +3,18 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { EASE, LIFT, PHONE, SAFE, SPRING, STORY, T, TYPE } from "../config/brand";
 import { app, s5, s6, s7, s8, trip } from "../config/content";
 import { G3, g2Text } from "../config/gradients";
-import { ServiceCard } from "../../components/ui";
 import { RollText } from "../components/kit";
 import { mix, press, sp, tw } from "../components/motion";
 import { FingerLayer, Phone3D, Pose, Tap, phonePose, projectApp } from "../components/Phone";
 import { Slice, typeStyle, wrapLines } from "../components/type";
 import {
+  CompletingSheets,
   DestRow,
   FareSheet,
+  MapBackdrop,
+  ServiceTile,
   HomeScreen,
   KeyboardLayer,
-  LoadingOverlay,
   OptionRow,
   OptionsScreen,
   OptionsState,
@@ -72,18 +73,19 @@ const camApply = (c: Cam, p: { x: number; y: number }) => ({ x: (p.x - c.rx) * c
 /* ------------------------------------------------------------------ the screen inside, per frame */
 
 const optionsState = (f: number): OptionsState => ({
-  rows: 1,
-  rowIn: [0, 1, 2].map((i) => tw(f, R7.rows[0] + i * R7.rowStagger, R7.rows[0] + i * R7.rowStagger + 8, 0, 1, EASE.expoOut)),
-  sel: tw(f, R7.selWipe[0], R7.selWipe[1], 0, 1, EASE.expoOut),
-  border: tw(f, R7.selWipe[0], R7.selWipe[1], 0, 1, EASE.expoOut),
+  // 05: Daily resolves first, the rest stay skeletons; then the rows resolve as in 06
+  dailyIn: tw(f, R7.dailyIn[0], R7.dailyIn[1], 0, 1, EASE.expoOut),
+  rowIn: [0, 1, 2].map((i) => tw(f, R7.rows[0] + i * R7.rowStagger, R7.rows[0] + i * R7.rowStagger + 6, 0, 1, EASE.expoOut)),
   rowPress: press(f, R7.tapPodSolo),
   contPress: press(f, R7.tapContinue),
+  contReady: f >= R7.tapPodSolo,
   roll: R7.roll as [number, number],
 });
 
 const MapAndSheets: React.FC<{ f: number }> = ({ f }) => {
   const fareP = tw(f, R7.fare[0], R7.fare[1], 0, 1, EASE.expoOut);
   const payP = tw(f, R8.sheet[0], R8.sheet[1], 0, 1, EASE.expoOut);
+  const secs = app.pay.countdownFrom - Math.max(0, Math.floor((f - R8.sheet[0]) / 30));
   return (
     <>
       <OptionsScreen
@@ -94,51 +96,69 @@ const MapAndSheets: React.FC<{ f: number }> = ({ f }) => {
         st={optionsState(f)}
       />
       {fareP > 0 ? (
-        <div style={{ position: "absolute", left: 0, top: (1 - fareP) * 620, width: 393, height: 852 }}>
-          <FareSheet f={f} roll={R7.maxPayRoll as [number, number]} />
-        </div>
+        <>
+          {/* 07 sits over the map framed on the route (the options screen behind is covered as the sheet rises) */}
+          <div style={{ position: "absolute", left: 0, top: (1 - fareP) * 852, width: 393, height: 852 }}>
+            <MapBackdrop f={f} />
+          </div>
+          <div style={{ position: "absolute", left: 0, top: (1 - fareP) * 620, width: 393, height: 852 }}>
+            <FareSheet f={f} roll={R7.maxPayRoll as [number, number]} payPress={press(f, R8.tapPay)} />
+          </div>
+        </>
       ) : null}
       {f >= R8.sheet[0] ? (
         <>
           {/* flat scrim: snaps on with the sheet (no dim fade) */}
           <div style={{ position: "absolute", inset: 0, background: "rgba(16,17,17,0.28)" }} />
           <div style={{ position: "absolute", left: 0, top: (1 - payP) * 720, width: 393, height: 852 }}>
-            <PaySheet f={f} />
+            <PaySheet secs={secs} cardSel={tw(f, R8.check[0], R8.check[1], 0, 1, EASE.expoOut)} cardPress={press(f, R8.tapCard)} contPress={press(f, R8.tapContinue)} />
           </div>
         </>
       ) : null}
+      {f >= R8.completing[0] ? <CompletingSheets spin={f} k={tw(f, R8.completing[0], R8.completing[1], 0, 1, EASE.expoOut)} /> : null}
     </>
   );
 };
 
-const Search: React.FC<{ f: number; overlay: boolean }> = ({ f, overlay }) => {
+const Search: React.FC<{ f: number; dim: boolean }> = ({ f, dim }) => {
   const letters = lettersAt(f);
-  const t4 = KEYS[3];
-  const refresh = f < t4 ? tw(f, KEYS[0], KEYS[0] + R6.refreshDur, 0, 1, EASE.expoOut) : tw(f, t4, t4 + R6.refreshDur, 0, 1, EASE.expoOut);
+  const last = letters > 0 ? KEYS[letters - 1] : KEYS[0];
   return (
-    <>
-      <SearchScreen f={f} letters={letters} caret={letters < s6.query.length || Math.floor(f / 8) % 2 === 0} refresh={refresh} refreshFrom={f < t4 ? 0 : 1} resultPress={press(f, R6.tapResult)} />
-      {overlay && f >= R6.loading[0] && f < R6.loading[1] ? <LoadingOverlay spin={f} /> : null}
-    </>
+    <SearchScreen
+      letters={letters}
+      caret={letters < s6.query.length || Math.floor(f / 8) % 2 === 0}
+      refresh={tw(f, last, last + R6.refreshDur, 0, 1, EASE.expoOut)}
+      resultPress={press(f, R6.tapResult)}
+      tapDim={dim && f >= R6.tapDim[0] && f < R6.tapDim[1]}
+    />
   );
 };
 
 const AppScreen: React.FC<{ f: number }> = ({ f }) => {
   const pulse = R5.pulses.map((a) => (f >= a && f < a + R5.pulseDraw * 2 ? (f - a) / (R5.pulseDraw * 2) : 0)).find((p) => p > 0) ?? 0;
-  const homeS = <HomeScreen pulse={pulse} tilePress={press(f, R5.tap)} />;
-  const plan = <PlanScreen locateRing={tw(f, R6.locateRing[0], R6.locateRing[1], 0, 1, EASE.expoOut)} destPress={press(f, R6.tapDest)} />;
+  // 01b: the Pod tile darkens #F4F5F4 → #E6E8E6 for 4f and scales to 0.97
+  const pressed = f >= R5.pressDark[0] && f < R5.pressDark[1];
+  const homeS = <HomeScreen pulse={pulse} tileDark={pressed ? 1 : 0} tileScale={pressed ? 0.97 : 1} />;
+  const plan = (
+    <PlanScreen
+      locateRing={tw(f, R6.locateRing[0], R6.locateRing[1], 0, 1, EASE.expoOut)}
+      destPress={press(f, R6.tapDest)}
+      focused={f >= R5.focus}
+      caret={f >= R5.focus && Math.floor((f - R5.focus) / 8) % 2 === 0}
+    />
+  );
   const pushP = (w: number[]) => tw(f, w[0], w[1], 0, 1, EASE.expoOut);
   let screen: React.ReactNode;
-  if (f < R5.push[0]) screen = homeS;
-  else if (f < R5.push[1]) screen = <Push p={pushP(R5.push)} from={homeS} to={plan} />;
+  if (f < R5.planUp[0]) screen = homeS;
+  else if (f < R5.planUp[1]) screen = <Push vertical p={pushP(R5.planUp)} from={homeS} to={plan} />; // full-screen modal slides up
   else if (f < R6.searchPush[0]) screen = plan;
-  else if (f < R6.searchPush[1]) screen = <Push p={pushP(R6.searchPush)} from={plan} to={<Search f={f} overlay={false} />} />;
-  else if (f < R6.mapPush[0]) screen = <Search f={f} overlay />;
-  else if (f < R6.mapPush[1]) screen = <Push p={pushP(R6.mapPush)} from={<Search f={f} overlay={false} />} to={<MapAndSheets f={f} />} />;
+  else if (f < R6.searchPush[1]) screen = <Push p={pushP(R6.searchPush)} from={plan} to={<Search f={f} dim={false} />} />;
+  else if (f < R6.mapPush[0]) screen = <Search f={f} dim />;
+  else if (f < R6.mapPush[1]) screen = <Push p={pushP(R6.mapPush)} from={<Search f={f} dim={false} />} to={<MapAndSheets f={f} />} />;
   else if (f < R8.success[0]) screen = <MapAndSheets f={f} />;
   else {
-    const c0 = R8.check[0];
-    const succ = <SuccessScreen ring={tw(f, c0, c0 + 4, 0, 1, EASE.expoOut)} fill={tw(f, c0 + 4, c0 + 7, 0, 1, EASE.expoOut)} check={tw(f, c0 + 5, R8.check[1], 0, 1, EASE.expoOut)} />;
+    const c0 = R8.check9[0];
+    const succ = <SuccessScreen ring={tw(f, c0, c0 + 4, 0, 1, EASE.expoOut)} fill={tw(f, c0 + 4, c0 + 7, 0, 1, EASE.expoOut)} check={tw(f, c0 + 5, R8.check9[1], 0, 1, EASE.expoOut)} />;
     const booked = <PodBookedScreen shapes={tw(f, T.s8b.shapes[0], T.s8b.shapes[1], 0, 1, EASE.expoOut)} />;
     const finding = <FindingPodScreen f={f} progress={tw(f, T.s8c.progress[0], T.s8c.progress[1], 0.08, 0.62, EASE.linear)} />;
     if (f < R8.success[1]) screen = <Push p={pushP(R8.success)} from={<MapAndSheets f={f} />} to={succ} />;
@@ -148,19 +168,16 @@ const AppScreen: React.FC<{ f: number }> = ({ f }) => {
     else if (f < T.s8c.push[1]) screen = <Push p={pushP(T.s8c.push)} from={booked} to={finding} />;
     else screen = finding;
   }
-  // keyboard: arrives with "Plan your ride", stays put through search, drops when the result is tapped
-  const kbX = f < R5.push[1] ? (1 - pushP(R5.push)) * 393 : 0;
-  const kbHide = tw(f, R6.loading[0], R6.loading[1], 0, 1, EASE.expoOut);
+  // keyboard: slides up 8f after the destination field is focused, stays through search, drops on the map push
+  const kbUp = tw(f, R5.kbUp[0], R5.kbUp[1], 0, 1, EASE.expoOut);
+  const kbHide = Math.max(1 - kbUp, tw(f, R6.mapPush[0], R6.mapPush[1], 0, 1, EASE.expoOut));
   const n = lettersAt(f);
-  const pressed = n > 0 && f - KEYS[n - 1] < 2 && f < R6.tapResult ? s6.query[n - 1] : null;
+  const pressedKey = n > 0 && f - KEYS[n - 1] < 2 && f < R6.tapResult ? s6.query[n - 1] : null;
   return (
     <>
       {screen}
-      {f >= R5.push[0] && kbHide < 1 && f < R6.mapPush[1] ? (
-        <div style={{ position: "absolute", left: kbX, top: 0, width: 393, height: 852 }}>
-          <KeyboardLayer hide={kbHide} pressed={pressed} />
-        </div>
-      ) : null}
+      {f >= R5.kbUp[0] && kbHide < 1 && f < R6.mapPush[1] ? <KeyboardLayer hide={kbHide} pressed={pressedKey} /> : null}
+      {f >= R6.tapDim[0] && f < R6.tapDim[1] ? <div style={{ position: "absolute", left: 0, top: 852 - 300, width: 393, height: 300, background: "rgba(16,17,17,0.10)" }} /> : null}
     </>
   );
 };
@@ -171,7 +188,9 @@ const TAP_POS: [number, number][] = [
   [POS.topResult.x, POS.topResult.y],
   [POS.podSoloRow.x, POS.podSoloRow.y],
   [POS.continueBtn.x, POS.continueBtn.y],
+  [POS.payBtn.x, POS.payBtn.y],
   [POS.cardRow.x, POS.cardRow.y],
+  [POS.payContinue.x, POS.payContinue.y],
 ];
 const TAPS: Tap[] = T.taps.map((at, i) => ({ at, x: TAP_POS[i][0], y: TAP_POS[i][1] }));
 
@@ -231,13 +250,13 @@ const Lines: React.FC<{ f: number }> = ({ f }) => {
 
 /** One lift-out per step: the element flies out of the phone (from its on-screen rect, camera and 3D pose included), overlays the lower phone, centred, and flies back before the next step. */
 const LIFTS = [
-  { at: R5.lift, back: R5.liftBack, rect: POS.liftTile, node: () => <ServiceCard kind="pod" {...app.home.services.pod} /> },
+  { at: R5.lift, back: R5.liftBack, rect: POS.liftTile, node: () => <ServiceTile kind="pod" /> },
   { at: R6.lift, back: R6.liftBack, rect: POS.liftDest, node: () => <DestRow /> },
   {
     at: R7.lift,
     back: R7.liftBack,
     rect: POS.liftPodSolo,
-    node: (f: number) => <OptionRow kind="pod" title={app.options.podSolo.title} sub={app.options.podSolo.sub} unit={app.options.podSolo.unit} price={<RollText text={trip.podPrice} f={f} a={0} b={1} size={16} />} sel={1} border={1} />,
+    node: (f: number) => <OptionRow kind="pod" title={app.options.podSolo.title} sub={app.options.podSolo.sub} unit={app.options.podSolo.unit} price={<RollText text={trip.podPrice} f={f} a={0} b={1} size={15.5} />} sel={1} />,
   },
   { at: R8.lift, back: R8.liftBack, rect: POS.liftCard, node: () => <PayRow i={0} sel={1} /> },
 ];
