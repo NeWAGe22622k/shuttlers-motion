@@ -654,7 +654,10 @@ def main():
     halt(sfx)
     # the door click is the only sound in the halt (f590); dry, it has its own tail
     # in the silence: the two blink sounds, nothing else
-    BLINKS = sorted(ON["blinks"] + OFF["blinks"])
+    # (frame, peak dBFS): the two blink ticks and the softer "open" tick
+    LEV = A["levels"]
+    SILENT_SOUNDS = sorted([(b, LEV["blinks"]) for b in ON["blinks"] + OFF["blinks"]] + [(b, LEV["openTick"]) for b in OFF["openTick"]])
+    BLINKS = [b for b, _ in SILENT_SOUNDS]
     for b in BLINKS:
         place(sfx, sfx_eyelid(), fs(b), 1.0)
     tail = int(0.12 * SR)
@@ -667,10 +670,10 @@ def main():
     out, info = loudnorm(pre)
     a, b = fs(A["halt"]), fs(A["backIn"])
     out[a:b] = np.where(np.abs(out[a:b]) < 10 ** (-90 / 20), 0, out[a:b])
-    # the blink sounds are alone in the silence: set each to exactly -12 dBFS peak after mastering
-    for bl in BLINKS:
+    # the blink sounds are alone in the silence: set each to its exact peak level after mastering
+    for bl, db in SILENT_SOUNDS:
         seg = out[fs(bl) : fs(bl) + EYELID_LEN]
-        seg *= 10 ** (-12 / 20) / max(1e-12, np.max(np.abs(seg)))
+        seg *= 10 ** (db / 20) / max(1e-12, np.max(np.abs(seg)))
     path = os.path.join(OUT, "score-v2.wav")
     sf.write(path, out, SR, subtype="PCM_24")
 
@@ -681,7 +684,7 @@ def main():
         problems.append(f"format {sr} {y.shape}")
     if np.max(np.abs(y)) >= 1.0:
         problems.append("clipping")
-    # f601-659 must be silent apart from the two blink sounds
+    # f601-659 must be silent apart from the blink / open ticks
     quiet = np.ones(N, bool)
     quiet[: fs(A["halt"] + 1)] = False
     quiet[fs(A["backIn"]) :] = False
@@ -690,7 +693,7 @@ def main():
     sil = 20 * np.log10(max(1e-12, np.max(np.abs(y[quiet]))))
     blink_db = [round(20 * np.log10(np.max(np.abs(y[fs(bl) : fs(bl) + EYELID_LEN]))), 1) for bl in BLINKS]
     if sil > -60:
-        problems.append(f"f601-659 not silent outside the blink sounds ({sil:.1f} dBFS)")
+        problems.append(f"f601-659 not silent outside the blink/open ticks ({sil:.1f} dBFS)")
     # cues: the sharpest attack in the SFX stem within +-1.5 frames of each cue must sit within +-1 frame of it
     s, _ = sf.read(os.path.join(STEMS, "sfx.wav"), dtype="float64")
     env = np.convolve(np.abs(s).max(axis=1), np.ones(48) / 48, mode="same")  # 1 ms envelope

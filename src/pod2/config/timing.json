@@ -271,17 +271,64 @@
   ]
  },
  "s9": {
-  "word": 220,
-  "blinks": [
-   615,
-   633
+  "_doc": "Revision 5: the reference blink. All frames absolute (b = 600).",
+  "word": 200,
+  "wordY": 620,
+  "eyeY": 1000,
+  "eyeW": 540,
+  "eyeH": 250,
+  "slam": [
+   600,
+   604
   ],
-  "blinkHalf": 4,
-  "close": [
-   650,
-   658
+  "grow": [
+   602,
+   609
   ],
-  "slit": 6
+  "settle": [
+   609,
+   612
+  ],
+  "drift": [
+   612,
+   614
+  ],
+  "blink1": {
+   "close": [
+    615,
+    617
+   ],
+   "open": [
+    618,
+    620
+   ]
+  },
+  "narrow": [
+   624,
+   626
+  ],
+  "blink2": {
+   "close": [
+    627,
+    629
+   ]
+  },
+  "dark": [
+   630,
+   645
+  ],
+  "slit": [
+   645,
+   648
+  ],
+  "open": [
+   648,
+   650
+  ],
+  "push": [
+   651,
+   660
+  ]
  },
  "s10": {
   "carIn": [
@@ -478,7 +525,7 @@
     478
    ],
    "blinks": [
-    633
+    627
    ],
    "door": [
     700
@@ -490,6 +537,9 @@
    "endTicks": [
     952,
     968
+   ],
+   "openTick": [
+    648
    ]
   },
   "keysOnGrid": [
@@ -502,7 +552,12 @@
    735,
    780
   ],
-  "whooshLen": 32
+  "whooshLen": 32,
+  "levels": {
+   "_doc": "peak dBFS of the sounds in the f600-660 silence",
+   "blinks": -12,
+   "openTick": -18
+  }
  },
  "story": {
   "numerals": [

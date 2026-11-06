@@ -4,56 +4,129 @@ import { CameraMotionBlur } from "@remotion/motion-blur";
 import { evolvePath } from "@remotion/paths";
 import { C, EASE, H, SAFE, T, TYPE, W } from "../config/brand";
 import { s10, s11, s12, s13, s14, s9 } from "../config/content";
-import { G1, G3 } from "../config/gradients";
+import { drift, G1, G3, Texture } from "../config/gradients";
 import { Asset } from "../../components/core";
 import { SMark } from "../../edu/kit";
 import { Breath, Handset, SleepFace } from "../components/Icons";
-import { mix, mixHex, tw } from "../components/motion";
+import { clamp, mix, mixHex, tw } from "../components/motion";
 import { POD_BODY, POD_L, PodAt } from "../components/Pod";
 import { placePath } from "../components/transitions";
 import { FillSweep, MaskRise, ScaleCut, Slice, SLICE_DUR, textWidth, typeStyle } from "../components/type";
 
-/* ================================================================== S9 · "Blink" (600–660) */
+/* ================================================================== S9 · "Blink" (600–660) · revision 5: the reference blink */
 
 /**
- * Only the word, 220px, centred on G3. The word itself blinks: a top and a bottom mask close over
- * the letters to a 6px slit and reopen (4f each way, expoInOut), closed exactly on the cue frames.
- * After the second blink the slit closes completely, and the film cuts to S10 on f660.
+ * Night #09090E with a faint, slowly drifting deepGreen field behind the eye. "Blink" (200px,
+ * ctaGreen) slams in from 1.6×; a ctaGreen almond eye (540×250) grows in with the film's one allowed
+ * overshoot (112% → 100%). Two blinks: the upper lid sweeps down until the shape is a 12px dashed
+ * lower-lid arc (lashes) while the word squashes to a thin line on the same frames. Then eyes shut
+ * (f630–644, grain only), a dashed slit appears, and eye and word snap open together.
  */
-const WORD = { size: T.s9.word, cy: 865 };
-// Google Sans: baseline at (halfLeading + .927em), cap top at baseline − .716em (line-height 1)
-const BASE = ((1 - 1.171) / 2 + 0.927) * WORD.size;
-const CAP = BASE - 0.716 * WORD.size;
-const EYE_LINE = (CAP + BASE) / 2; // where the lids meet
+const S9T = T.s9;
+const EYE = { w: S9T.eyeW, h: S9T.eyeH, cy: S9T.eyeY, iris: 95, catch: 28 };
+const HW = EYE.w / 2;
+const SAG = 60; // the closed lower-lid arc (smile)
 
-const lidAt = (f: number) => {
-  const h = T.s9.blinkHalf;
-  let c = 0;
-  for (const b of T.s9.blinks) {
-    if (f >= b - h && f < b) c = Math.max(c, tw(f, b - h, b, 0, 1, EASE.expoInOut));
-    else if (f >= b && f < b + h) c = Math.max(c, tw(f, b, b + h, 1, 0, EASE.expoInOut));
-  }
-  const [a, z] = T.s9.close;
-  const mid = (a + z) / 2;
-  if (f >= a) c = f < mid ? Math.max(c, tw(f, a, mid, 0, 1, EASE.expoInOut)) : 1 + tw(f, mid, z, 0, 1, EASE.expoInOut); // >1: the slit itself closes
-  return c;
+/** lid c: 0 open → 1 closed. Quadratic controls sit at twice the curve's mid offset. */
+const almondPath = (c: number) => {
+  const up = mix(-EYE.h, 2 * SAG * 0.98, c);
+  const lo = mix(EYE.h, 2 * SAG, c);
+  return `M ${-HW} 0 Q 0 ${up} ${HW} 0 Q 0 ${lo} ${-HW} 0 Z`;
+};
+const LID_ARC = `M ${-HW} 0 Q 0 ${2 * SAG} ${HW} 0`;
+const LID_LEN = 640; // ≈ arc length; dashes leave 4 short gaps
+
+const lidC = (f: number) => {
+  const B1 = S9T.blink1;
+  const B2 = S9T.blink2;
+  if (f >= B1.close[0] && f < B1.open[0]) return tw(f, B1.close[0] - 1, B1.close[1], 0, 1, EASE.expoInOut);
+  if (f >= B1.open[0] && f <= B1.open[1]) return tw(f, B1.open[0] - 1, B1.open[1], 1, 0, EASE.expoOut);
+  if (f >= B2.close[0] && f < S9T.dark[0]) return tw(f, B2.close[0] - 1, B2.close[1], 0, 1, EASE.expoInOut);
+  return 0;
+};
+
+/** Word squash (scaleY) follows the lid on the same frames; 0 while the eyes are shut. */
+const wordY = (f: number) => {
+  if (f >= S9T.dark[0] && f < S9T.open[0]) return 0;
+  if (f >= S9T.open[0]) return tw(f, S9T.open[0] - 1, S9T.open[1], 0, 1, EASE.expoOut);
+  return mix(1, 0.06, lidC(f));
+};
+
+const eyeScale = (f: number) => {
+  if (f < S9T.grow[0]) return 0;
+  if (f < S9T.grow[1]) return mix(0.06, 1.12, tw(f, S9T.grow[0], S9T.grow[1], 0, 1, EASE.expoOut));
+  return mix(1.12, 1, tw(f, S9T.settle[0], S9T.settle[1], 0, 1, EASE.expoOut)); // the one allowed overshoot
+};
+
+const Dashed: React.FC<{ draw?: number }> = ({ draw = 1 }) => {
+  const dash = (LID_LEN - 4 * 14) / 5;
+  const pattern = `${dash.toFixed(1)} 14`;
+  return (
+    <svg width={EYE.w + 40} height={2 * SAG + 40} viewBox={`${-HW - 20} -20 ${EYE.w + 40} ${2 * SAG + 40}`} style={{ position: "absolute", left: W / 2 - HW - 20, top: EYE.cy - 20, overflow: "visible" }}>
+      <defs>
+        <clipPath id="slitDraw">
+          <rect x={-HW - 20} y={-40} width={(EYE.w + 40) * clamp(draw)} height={2 * SAG + 80} />
+        </clipPath>
+      </defs>
+      <path d={LID_ARC} fill="none" stroke={C.ctaGreen} strokeWidth={12} strokeLinecap="round" strokeDasharray={pattern} clipPath="url(#slitDraw)" />
+    </svg>
+  );
 };
 
 export const S9: React.FC = () => {
   const f = useCurrentFrame();
-  const c = lidAt(f);
-  const slit = T.s9.slit / 2;
-  const close = Math.min(1, c);
-  const shut = Math.max(0, c - 1);
-  const topInset = mix(0, EYE_LINE - slit, close) + slit * shut;
-  const botInset = mix(0, WORD.size - EYE_LINE - slit, close) + slit * shut;
-  const grow = 1 + 0.05 * ((f - T.scenes.s9[0]) / 30);
+  const dark = f >= S9T.dark[0] && f < S9T.slit[0];
+  const d = drift("s9field", f, 60, 0.12);
+  const push = 1 + 0.02 * tw(f, S9T.push[0], S9T.push[1], 0, 1, EASE.linear);
+  const slam = f < S9T.slam[1] ? mix(1.6, 1, tw(f, S9T.slam[0], S9T.slam[1], 0, 1, EASE.expoOut)) : 1;
+  const c = lidC(f);
+  const narrow = f >= S9T.narrow[0] && f < S9T.dark[0] ? mix(1, 0.6, tw(f, S9T.narrow[0], S9T.narrow[1], 0, 1, EASE.expoOut)) : 1;
+  const openY = f >= S9T.open[0] ? tw(f, S9T.open[0] - 1, S9T.open[1], 0, 1, EASE.expoOut) : 1;
+  const sc = eyeScale(f);
+  const irisX = 20 + 6 * tw(f, S9T.drift[0], S9T.drift[1], 0, 1, EASE.expoInOut) + (f >= S9T.push[0] ? 4 * Math.sin((f - S9T.push[0]) / 3) : 0);
+  const closedShape = c > 0.92;
+  const showEye = !dark && f >= S9T.grow[0] && !(f >= S9T.slit[0] && f < S9T.open[0]);
   return (
-    <AbsoluteFill>
-      <G3 f={f} />
-      <div style={{ position: "absolute", left: 0, top: WORD.cy - EYE_LINE, width: W, display: "flex", justifyContent: "center", transform: `scale(${grow.toFixed(4)})`, transformOrigin: `50% ${EYE_LINE}px` }}>
-        <div style={{ ...typeStyle({ size: WORD.size, lh: 1 }), clipPath: `inset(${topInset.toFixed(2)}px -20px ${botInset.toFixed(2)}px -20px)` }}>{s9.line}</div>
-      </div>
+    <AbsoluteFill style={{ background: C.night }}>
+      {!dark ? (
+        <AbsoluteFill
+          style={{
+            background: `radial-gradient(ellipse 520px 420px at ${(W / 2 + d.x).toFixed(1)}px ${(EYE.cy + d.y).toFixed(1)}px, rgba(10,107,61,0.22) 0%, rgba(10,107,61,0.15) 30%, rgba(10,107,61,0.06) 62%, rgba(10,107,61,0) 100%)`,
+          }}
+        />
+      ) : (
+        <Texture f={f} blend="normal" strength={0.7} />
+      )}
+      <AbsoluteFill style={{ transform: `scale(${push.toFixed(4)})`, transformOrigin: `50% ${(S9T.wordY + EYE.cy) / 2}px` }}>
+        {!dark && f < S9T.slit[0] || f >= S9T.open[0] ? (
+          <div style={{ position: "absolute", left: 0, width: W, top: S9T.wordY - S9T.word * 0.54, display: "flex", justifyContent: "center", transform: `scale(${slam.toFixed(4)}, ${(slam * wordY(f)).toFixed(4)})`, transformOrigin: `50% ${S9T.word * 0.54}px` }}>
+            <div style={typeStyle({ size: S9T.word, color: C.ctaGreen, lh: 1.08 })}>{s9.line}</div>
+          </div>
+        ) : null}
+        {showEye ? (
+          <div style={{ position: "absolute", left: W / 2, top: EYE.cy, width: 0, height: 0, transform: `scale(${sc.toFixed(4)}, ${(sc * narrow * openY).toFixed(4)})` }}>
+            {closedShape ? (
+              <div style={{ position: "absolute", left: -W / 2, top: -EYE.cy }}>
+                <Dashed />
+              </div>
+            ) : (
+              <svg width={EYE.w} height={EYE.h} viewBox={`${-HW} ${-EYE.h / 2} ${EYE.w} ${EYE.h}`} style={{ position: "absolute", left: -HW, top: -EYE.h / 2, overflow: "visible" }}>
+                <defs>
+                  <clipPath id="almond9">
+                    <path d={almondPath(c)} />
+                  </clipPath>
+                </defs>
+                <path d={almondPath(c)} fill={C.ctaGreen} />
+                <g clipPath="url(#almond9)">
+                  <circle cx={irisX} cy={0} r={EYE.iris} fill={C.night} />
+                  <circle cx={irisX - 38} cy={-36} r={EYE.catch} fill={C.ctaGreen} />
+                </g>
+              </svg>
+            )}
+          </div>
+        ) : null}
+        {f >= S9T.slit[0] && f < S9T.open[0] ? <Dashed draw={tw(f, S9T.slit[0], S9T.slit[1], 0.2, 1, EASE.expoOut)} /> : null}
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
