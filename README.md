@@ -48,3 +48,20 @@ Generated audio (`public/audio/`) and renders (`out/`) are not committed. Run bo
 ```bash
 python3 audio/build_audio.py && python3 audio/build_edu_audio.py
 ```
+
+## Video 2 · How to book Pod Solo (Pod Now), 16:9 (`PodVideo2-16x9`)
+
+1920×1080 · 30fps · 900f (30s). Built to the "Shuttlers Pod — Video 2 … 16:9" brief as a self-contained module in `src/pod2/`.
+
+```bash
+python3 audio/build_v2_16x9_audio.py      # public/audio/score-v2.wav (+ stems in public/audio/v2-16x9/stems), asserts levels/silence/cues
+npm run render:v2                          # out/pod-video2-16x9.mp4
+node tools/stills.mjs PodVideo2-16x9 15 45 95   # QA stills → out/qa/v2-<N>.png (PROPS='{"grain":false}' to switch grain off)
+```
+
+- `src/pod2/config/timing.json`: every frame number and audio cue (read by the TS and by the Python score).
+- `src/pod2/config/content.ts`: the content manager's copy, word for word, plus the in-app strings from the screenshots.
+- `src/pod2/config/brand.ts` (tokens, easings, phone/story layout) · `src/pod2/config/gradients.tsx` (G1 night mesh, G2 Pod Flood, G3 paper, G4 stepped band, grain + 4×4 dither).
+- `src/pod2/components/`: THE POD vector, line icons, 3D phone + fingertip taps, type reveals (maskRise, slice, fillSweep, scaleCut), transitions (gradientWipe, maskGrow).
+- `src/pod2/screens/`: screens 01–09 rebuilt at 393×852. Check one against its screenshot with `ScreenCheck2` (`--props='{"screen":"pay","overlay":0.5}'`).
+- `Components-Preview-V2`: p1 every component in every state, p2 every rebuilt screen.

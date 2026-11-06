@@ -133,7 +133,7 @@ const STEPS = [
   { at: R7.numeral, line: R7.line, n: s7.step, text: s7.line },
   { at: R8.numeral, line: R8.line, n: s8.step, text: s8.line },
 ];
-const NUM = { top: STORY.top, clipH: 236, offset: -42 };
+const NUM = { top: STORY.top, clipH: 236, offset: -72 };
 
 const Story: React.FC<{ f: number }> = ({ f }) => {
   const k = STEPS.reduce((acc, s, i) => (f >= s.at ? i : acc), 0);

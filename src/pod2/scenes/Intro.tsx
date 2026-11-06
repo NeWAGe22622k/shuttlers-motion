@@ -73,7 +73,7 @@ export const S2: React.FC = () => {
           <div style={typeStyle({ size: small })}>{w2}</div>
         </ScaleCut>
         <ScaleCut f={f} at={R.words[2]} origin={`${Math.min(wNow / 2, 440)}px 50%`} style={{ position: "absolute", left: xNow, top: yNow }}>
-          <FillSweep f={f} at={R.sweep[0]} text={w3} size={big} stroke={5} />
+          <FillSweep f={f} at={R.sweep[0]} from={R.words[2]} text={w3} size={big} stroke={5} />
         </ScaleCut>
       </AbsoluteFill>
     </AbsoluteFill>

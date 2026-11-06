@@ -137,9 +137,10 @@ export const Slice: React.FC<
 
 /* ------------------------------------------------------------------ FillSweep */
 
-export const FillSweep: React.FC<TypeProps & { f: number; at: number; text: string; tone?: G2Tone; stroke?: number; strokeColor?: string; style?: React.CSSProperties }> = ({
+export const FillSweep: React.FC<TypeProps & { f: number; at: number; from?: number; text: string; tone?: G2Tone; stroke?: number; strokeColor?: string; style?: React.CSSProperties }> = ({
   f,
   at,
+  from,
   text,
   tone = "onLight",
   stroke = 3,
@@ -147,6 +148,7 @@ export const FillSweep: React.FC<TypeProps & { f: number; at: number; text: stri
   style,
   ...tp
 }) => {
+  if (f < (from ?? at)) return null; // the ink outline cuts on (at `from`, default `at`)
   const p = tw(f, at, at + M.fillSweep, 0, 1, EASE.expoInOut);
   const ts = typeStyle(tp);
   return (

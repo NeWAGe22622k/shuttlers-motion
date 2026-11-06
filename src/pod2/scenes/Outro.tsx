@@ -275,7 +275,7 @@ const CAR = { w: 660, srcW: 501, srcH: 332 };
 export const S13: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s13;
-  const settle = tw(f, R.settle[0], R.settle[1], 0, 1, EASE.expoOut);
+  const settle = tw(f, R.settle[0], R.settle[1], 0, 1, EASE.expoInOut); // sits on the Pod's spot at the cut, then moves
   const pull = tw(f, R.pull[0], R.pull[1], 0, 1, EASE.quintIn);
   const cx = mix(S12POD.x, 960, settle);
   const cy = mix(S12POD.y, 470, settle) - 80 * pull;
@@ -283,7 +283,7 @@ export const S13: React.FC = () => {
   const k = CAR.w / CAR.srcW;
   const h = CAR.srcH * k;
   // the Pod outline from S12 erases off the car on the cut
-  const o = tw(f, R.outline[0], R.outline[1], 0, 1, EASE.expoOut);
+  const o = tw(f, R.outline[0], R.outline[1], 0, 1, EASE.linear);
   const outline = placePath(POD_BODY, S12POD.x, S12POD.y, S12POD.size / POD_L, 0);
   const ev = evolvePath(Math.max(0.0001, 1 - o), outline);
   return (
