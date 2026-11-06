@@ -228,6 +228,21 @@ def sfx_door():
     return np.tanh(1.3 * (0.9 * thump + 0.6 * latch))
 
 
+def sfx_eyelid():
+    """A soft, short eyelid tick: a 4 ms filtered click plus a tiny 1.8 kHz tone, at -12 dB."""
+    n = int(0.05 * SR)
+    t = tsec(n)
+    k = int(0.004 * SR)
+    click = np.zeros(n)
+    click[:k] = bp(noise(k), 1500, 5000) * np.hanning(2 * k)[k:]
+    tone = np.sin(2 * np.pi * 1800 * t) * env_exp(n, 0.008) * 0.6
+    x = click + tone
+    return x / np.max(np.abs(x)) * 10 ** (-12 / 20)
+
+
+EYELID_LEN = int(0.05 * SR)
+
+
 def sfx_tock():
     """Pin landing: a short wood-block knock (mid-range, no sub: never a second kick)."""
     n = int(0.08 * SR)
@@ -325,13 +340,11 @@ PLUCK_STEPS = [0, 3, 6, 8, 11, 14]
 
 
 def sections(frame):
-    """what plays at a frame: 'build' | 'full' | 'thin' | 'halt' | 'out'"""
+    """what plays at a frame: 'build' | 'full' | 'halt' (f600-660, "Blink": silence) | 'out'"""
     if frame < A["drop"]:
         return "build"
-    if frame < A["thinFrom"]:
-        return "full"
     if frame < A["halt"]:
-        return "thin"
+        return "full"
     if frame < A["backIn"]:
         return "halt"
     if frame > A["drumsOutAfter"]:
@@ -415,11 +428,6 @@ def build():
         place(music, stab([f * 2 for f in CHORDS[(fs(h) // BAR_S) % 4]["pad"]]), fs(h), 0.45, pan=0.1)
     accent(music, drums, sfx, ON["backIn"][0], big=True)
     accent(music, drums, sfx, ON["finalHit"][0], big=True)
-    # the last hit (f555) lands in the thin section, which has no groove kick: it gets the one kick on that beat
-    place(drums, kick(), fs(ON["lastHit"][0]), 1.0)
-    KICKS_PLACED.append(fs(ON["lastHit"][0]))
-    place(sfx, crash(1.6), fs(ON["lastHit"][0]), 0.7)
-    place(music, stab(CHORDS[3]["pad"], 0.4), fs(ON["lastHit"][0]), 0.45)
     # swell under the flood (f645-690)
     s0, s1 = fs(A["swell"][0]), fs(A["swell"][1])
     sw = chord_tone([f * 2 for f in CHORDS[2]["pad"]], s1 - s0, cutoff=3000, voices=4) * np.linspace(0, 1, s1 - s0) ** 2
@@ -439,10 +447,10 @@ def build():
     for r in sorted(OFF["reel"] + A["reelOnGrid"]):
         place(sfx, sfx_tick(2600), fs(r), 0.45, pan=-0.2)
     place(sfx, sfx_tock(), fs(ON["pin"][0]), 0.9)
-    for b in OFF["blinks"]:
-        place(sfx, sfx_tick(4200), fs(b), 0.5)
+    # the door click sits on top of the music (f700)
+    place(sfx, sfx_door(), fs(OFF["door"][0]), 0.9)
     place(sfx, sfx_whoosh(A["whooshLen"]), fs(ON["whoosh"][0]), 0.8)
-    for tk in ON["endTicks"]:
+    for tk in sorted(ON["endTicks"] + OFF["endTicks"]):
         place(sfx, sfx_tick(3600), fs(tk), 0.6)
     return drums, bass, music, sfx
 
@@ -494,7 +502,7 @@ def duck_env(hits):
 
 
 def halt(x):
-    """f570 -> f630: true silence for everything except the door click (added after)."""
+    """f600 -> f660 ("Blink"): the music stops dead; only the two eyelid ticks are added afterwards."""
     a, b = fs(A["halt"]), fs(A["backIn"])
     fade = int(0.003 * SR)
     x[a - fade : a] *= np.linspace(1, 0, fade)[:, None]
@@ -636,7 +644,7 @@ def main():
     ir = reverb_ir()
     music = apply_reverb(music, ir, 0.35)
     drums = drums + 0.12 * np.stack([fftconvolve(drums[:, c], ir[:, c])[:N] for c in range(2)], axis=1)
-    duck = duck_env(ON["hits"] + ON["stabs"] + ON["lastHit"] + ON["backIn"] + ON["finalHit"])
+    duck = duck_env(ON["hits"] + ON["stabs"] + ON["backIn"] + ON["finalHit"])
     music *= duck[:, None]
     bass *= duck[:, None]
     # drums out after f870 (already not triggered); short tail to 900 on everything
@@ -645,7 +653,10 @@ def main():
     sfx = apply_reverb(sfx, ir, 0.12)
     halt(sfx)
     # the door click is the only sound in the halt (f590); dry, it has its own tail
-    place(sfx, sfx_door(), fs(OFF["door"][0]), 0.9)
+    # in the silence: the two blink sounds, nothing else
+    BLINKS = sorted(ON["blinks"] + OFF["blinks"])
+    for b in BLINKS:
+        place(sfx, sfx_eyelid(), fs(b), 1.0)
     tail = int(0.12 * SR)
     mix = drums + bass + music + sfx
     mix[-tail:] *= np.linspace(1, 0, tail)[:, None]
@@ -654,8 +665,12 @@ def main():
         sf.write(os.path.join(STEMS, f"{name}.wav"), np.clip(st / max(1.0, np.max(np.abs(st)) * 1.05), -1, 1), SR, subtype="PCM_24")
     pre = limiter(mix / max(1e-9, np.max(np.abs(mix))) * 10 ** (PRE_GAIN_DB / 20), ceiling_db=-2.0)
     out, info = loudnorm(pre)
-    a, b = fs(A["halt"]), fs(OFF["door"][0])
+    a, b = fs(A["halt"]), fs(A["backIn"])
     out[a:b] = np.where(np.abs(out[a:b]) < 10 ** (-90 / 20), 0, out[a:b])
+    # the blink sounds are alone in the silence: set each to exactly -12 dBFS peak after mastering
+    for bl in BLINKS:
+        seg = out[fs(bl) : fs(bl) + EYELID_LEN]
+        seg *= 10 ** (-12 / 20) / max(1e-12, np.max(np.abs(seg)))
     path = os.path.join(OUT, "score-v2.wav")
     sf.write(path, out, SR, subtype="PCM_24")
 
@@ -666,14 +681,21 @@ def main():
         problems.append(f"format {sr} {y.shape}")
     if np.max(np.abs(y)) >= 1.0:
         problems.append("clipping")
-    sil = 20 * np.log10(max(1e-12, np.max(np.abs(y[fs(A['halt']) : fs(OFF['door'][0])]))))
+    # f601-659 must be silent apart from the two blink sounds
+    quiet = np.ones(N, bool)
+    quiet[: fs(A["halt"] + 1)] = False
+    quiet[fs(A["backIn"]) :] = False
+    for bl in BLINKS:
+        quiet[fs(bl) : fs(bl) + EYELID_LEN] = False
+    sil = 20 * np.log10(max(1e-12, np.max(np.abs(y[quiet]))))
+    blink_db = [round(20 * np.log10(np.max(np.abs(y[fs(bl) : fs(bl) + EYELID_LEN]))), 1) for bl in BLINKS]
     if sil > -60:
-        problems.append(f"f570-590 not silent ({sil:.1f} dBFS)")
+        problems.append(f"f601-659 not silent outside the blink sounds ({sil:.1f} dBFS)")
     # cues: the sharpest attack in the SFX stem within +-1.5 frames of each cue must sit within +-1 frame of it
     s, _ = sf.read(os.path.join(STEMS, "sfx.wav"), dtype="float64")
     env = np.convolve(np.abs(s).max(axis=1), np.ones(48) / 48, mode="same")  # 1 ms envelope
     rise = np.diff(env, prepend=env[0])
-    cues = ON["taps"] + ON["clack"] + OFF["clack"] + ON["pin"] + OFF["door"] + OFF["blinks"] + ON["endTicks"]
+    cues = ON["taps"] + ON["clack"] + OFF["clack"] + ON["pin"] + OFF["door"] + BLINKS + ON["endTicks"] + OFF["endTicks"]
     late = []
     for c in cues:
         w0, w1 = fs(c - 1.5), fs(c + 1.5)
@@ -684,7 +706,7 @@ def main():
         problems.append(f"cues off by >1 frame: {late}")
     print(f"wrote {os.path.relpath(path, ROOT)}  {N / SR:.3f}s  {SR} Hz 24-bit stereo")
     print(f"  loudnorm out: I={info.get('output_i')} LUFS  TP={info.get('output_tp')} dBTP  LRA={info.get('output_lra')}  ({info.get('normalization_type')})")
-    print(f"  peak {20 * np.log10(np.max(np.abs(y))):.2f} dBFS · f570-590 max {sil:.1f} dBFS · {len(cues)} cues checked")
+    print(f"  peak {20 * np.log10(np.max(np.abs(y))):.2f} dBFS · f601-659 max {sil:.1f} dBFS outside the blinks (blinks peak {blink_db} dBFS) · {len(cues)} cues checked")
     rep = onset_report(y)
     print(f"  onsets: {rep['kicks_expected']} groove kicks, max error {rep['kick_err_ms_max']:.3f} ms (limit 1 ms); "
           f"{rep['transients']} transients, min gap {rep['min_gap_ms']:.1f} ms (limit 50 ms)")

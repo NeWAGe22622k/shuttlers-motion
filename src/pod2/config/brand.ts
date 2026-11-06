@@ -47,26 +47,34 @@ export const SPRING = {
 export const TYPE = { hero: 160, title: 104, step: 80, small: 48, numeral: 220, word: 160 };
 export const TRACK = { tight: "-0.02em" };
 
-export const W = 1920;
-export const H = 1080;
-export const SAFE = { x0: 96, x1: 1824, y0: 60, y1: 1020 };
+// Portrait master (revision 3): 1080×1920. Text and key UI stay inside SAFE (platform UI covers the
+// bottom and the right edge).
+export const W = 1080;
+export const H = 1920;
+export const SAFE = { x0: 90, x1: 990, y0: 250, y1: 1480 };
 
-/** Phone: screen 393×852 app points scaled ×1.17 to 1000px tall (10px bezel outside, 64px outer radius). */
+/** Phone: centred, 760px wide (screen scale ≈1.93), top at y≈560; 10px bezel outside, 64px outer radius. */
+const PHONE_SCALE = 760 / 393;
+const PHONE_TOP = 560;
 export const PHONE = {
-  cx: 620,
-  cy: 540,
+  cx: 540,
+  cy: PHONE_TOP + 10 + (852 * PHONE_SCALE) / 2,
+  top: PHONE_TOP,
   appW: 393,
   appH: 852,
-  scale: 1000 / 852,
+  scale: PHONE_SCALE,
   bezel: 10,
   radius: 64,
-  perspective: 1800,
-  ry: -10,
-  rx: 5,
+  perspective: 2400,
+  ry: -6,
+  rx: 3,
 };
-export const STORY = { x0: 1040, x1: 1800, top: 240 };
-/** Lift-outs land in the story zone at 1.6× their in-phone size. */
-export const LIFT = { scale: 1.6 };
+/** Step numeral + step line sit above the phone, left-aligned (y 260–520). */
+export const STORY = { x0: 90, x1: 990, top: 268, bottom: 520 };
+/** Lift-outs overlay the lower part of the phone, centred (y 1150–1450), at up to 2.6 px per app point, max 860px wide. */
+export const LIFT = { cx: 540, cy: 1300, maxW: 860, maxScale: 2.6 };
+/** Persistent app icon, top-right, f0–929. */
+export const ICON = { x: 902, y: 150, size: 88 };
 
 /** Motion constants (durations in frames; brief §4). */
 export const M = {

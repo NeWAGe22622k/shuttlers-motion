@@ -1,241 +1,204 @@
 import React from "react";
 import { AbsoluteFill, random, useCurrentFrame } from "remotion";
-import { evolvePath, getLength } from "@remotion/paths";
-import { C, EASE, H, T, TYPE, W } from "../config/brand";
+import { CameraMotionBlur } from "@remotion/motion-blur";
+import { evolvePath } from "@remotion/paths";
+import { C, EASE, H, SAFE, T, TYPE, W } from "../config/brand";
 import { s10, s11, s12, s13, s14, s9 } from "../config/content";
-import { G1, G2, G3, Texture } from "../config/gradients";
+import { G1, G3 } from "../config/gradients";
 import { Asset } from "../../components/core";
 import { SMark } from "../../edu/kit";
-import { Breath, Handset, Pin, SleepFace } from "../components/Icons";
-import { CREEK, LAGOON, PICKUP, Pt, ROADS, ROUNDABOUT, toPath, toPoly } from "../components/RoadNet";
-import { FindingPodScreen, PodBookedScreen } from "../screens/Screens";
-import { clamp, mix, mixHex, tw } from "../components/motion";
+import { Breath, Handset, SleepFace } from "../components/Icons";
+import { mix, mixHex, tw } from "../components/motion";
 import { POD_BODY, POD_L, PodAt } from "../components/Pod";
-import { growScale, placePath } from "../components/transitions";
-import { FillSweep, MaskRise, ScaleCut, Slice, SLICE_DUR, textWidth, wrapLines } from "../components/type";
+import { placePath } from "../components/transitions";
+import { FillSweep, MaskRise, ScaleCut, Slice, SLICE_DUR, textWidth, typeStyle } from "../components/type";
 
-/* ================================================================== S9 · "Blink." (510–570) */
+/* ================================================================== S9 · "Blink" (600–660) */
 
 /**
- * The eye (240px) blinks twice. Each time the lid reopens, the eye shape has become a window onto
- * the app: first 10-pod-booked ("Your Pod is booked"), then 11-finding-pod (progress bar moving).
- * From f540 the window grows to fill the frame and the inside cuts to black.
+ * Only the word, 220px, centred on G3. The word itself blinks: a top and a bottom mask close over
+ * the letters to a 6px slit and reopen (4f each way, expoInOut), closed exactly on the cue frames.
+ * After the second blink the slit closes completely, and the film cuts to S10 on f660.
  */
-export const EYE = { x: 960, y: 330, size: T.s9.eyeSize };
-const U = EYE.size / 24; // px per icon unit
-const EYE_STROKE = 2.5 * U;
-const almond = (cy: number) => `M 1.5 12 C 5 ${cy} 19 ${cy} 22.5 12 C 19 17.8 5 17.8 1.5 12 Z`; // region below the lid
-const LOWER = "M 1.5 12 C 5 17.8 19 17.8 22.5 12";
-const lidCurve = (cy: number) => `M 1.5 12 C 5 ${cy} 19 ${cy} 22.5 12`;
-const place = (d: string, s: number) => placePath(placePath(d, -12, -12, 1), EYE.x, EYE.y, s);
+const WORD = { size: T.s9.word, cy: 865 };
+// Google Sans: baseline at (halfLeading + .927em), cap top at baseline − .716em (line-height 1)
+const BASE = ((1 - 1.171) / 2 + 0.927) * WORD.size;
+const CAP = BASE - 0.716 * WORD.size;
+const EYE_LINE = (CAP + BASE) / 2; // where the lids meet
 
-const blinkLid = (f: number, [a, b]: number[]) => {
-  const mid = (a + b) / 2;
-  return f < a || f >= b ? 0 : f < mid ? tw(f, a, mid, 0, 1, EASE.expoInOut) : tw(f, mid, b, 1, 0, EASE.expoInOut);
-};
-
-/** Window scale (×U): 1 until the first reopen, opens to windowScale, then the f540 grow fills the frame. */
-const eyeScale = (f: number) => {
-  const [b1] = T.s9.blinks;
-  const mid1 = (b1[0] + b1[1]) / 2;
-  const open = mix(1, T.s9.windowScale, tw(f, mid1, b1[1] + 2, 0, 1, EASE.expoOut)) * (1 + 0.004 * Math.max(0, f - b1[1])); // keeps pushing in
-  const [g0, g1] = T.transitions.maskGrowEye;
-  return f < g0 ? open : growScale(f, g0, g1, open, 140);
+const lidAt = (f: number) => {
+  const h = T.s9.blinkHalf;
+  let c = 0;
+  for (const b of T.s9.blinks) {
+    if (f >= b - h && f < b) c = Math.max(c, tw(f, b - h, b, 0, 1, EASE.expoInOut));
+    else if (f >= b && f < b + h) c = Math.max(c, tw(f, b, b + h, 1, 0, EASE.expoInOut));
+  }
+  const [a, z] = T.s9.close;
+  const mid = (a + z) / 2;
+  if (f >= a) c = f < mid ? Math.max(c, tw(f, a, mid, 0, 1, EASE.expoInOut)) : 1 + tw(f, mid, z, 0, 1, EASE.expoInOut); // >1: the slit itself closes
+  return c;
 };
 
 export const S9: React.FC = () => {
   const f = useCurrentFrame();
-  const [b1, b2] = T.s9.blinks;
-  const mid1 = (b1[0] + b1[1]) / 2;
-  const mid2 = (b2[0] + b2[1]) / 2;
-  const lid = Math.max(blinkLid(f, b1), blinkLid(f, b2));
-  const cy = mix(6.2, 17.8, lid);
-  const sc = eyeScale(f);
-  const s = U * sc;
+  const c = lidAt(f);
+  const slit = T.s9.slit / 2;
+  const close = Math.min(1, c);
+  const shut = Math.max(0, c - 1);
+  const topInset = mix(0, EYE_LINE - slit, close) + slit * shut;
+  const botInset = mix(0, WORD.size - EYE_LINE - slit, close) + slit * shut;
   const grow = 1 + 0.05 * ((f - T.scenes.s9[0]) / 30);
-  // what the window shows
-  const screen = f < mid1 ? null : f < mid2 ? "booked" : f < T.transitions.eyeContentUntil ? "finding" : "black";
-  // booked: popper shapes + "Your Pod is booked" + body; finding: title, progress bar, quote
-  const roi = screen === "booked" ? { x: 196, y: 482 } : { x: 196, y: 560 };
-  const k = (screen === "booked" ? 1.15 : 1.3) * (sc / T.s9.windowScale); // content px per app point, follows the window
   return (
     <AbsoluteFill>
       <G3 f={f} />
-      <div style={{ position: "absolute", left: 0, top: 640, width: W, textAlign: "center", transform: `scale(${grow.toFixed(4)})`, transformOrigin: "50% 50%" }}>
-        <div style={{ fontFamily: "Google Sans", fontSize: TYPE.word, fontWeight: 700, letterSpacing: "-0.02em", color: C.ink, lineHeight: 1.08 }}>{s9.line}</div>
+      <div style={{ position: "absolute", left: 0, top: WORD.cy - EYE_LINE, width: W, display: "flex", justifyContent: "center", transform: `scale(${grow.toFixed(4)})`, transformOrigin: `50% ${EYE_LINE}px` }}>
+        <div style={{ ...typeStyle({ size: WORD.size, lh: 1 }), clipPath: `inset(${topInset.toFixed(2)}px -20px ${botInset.toFixed(2)}px -20px)` }}>{s9.line}</div>
       </div>
-      {screen ? (
-        <AbsoluteFill style={{ clipPath: `path('${place(almond(cy), s)}')`, background: screen === "black" ? "#000" : C.white }}>
-          {screen !== "black" ? (
-            <div style={{ position: "absolute", left: EYE.x - roi.x * k, top: EYE.y - roi.y * k, width: 393, height: 852, transform: `scale(${k.toFixed(4)})`, transformOrigin: "0 0" }}>
-              {screen === "booked" ? (
-                <PodBookedScreen shapes={tw(f, mid1, mid1 + 10, 0, 1, EASE.expoOut)} />
-              ) : (
-                <FindingPodScreen f={f} progress={tw(f, mid2, T.transitions.eyeContentUntil, 0.12, 0.46, EASE.linear)} />
-              )}
-            </div>
-          ) : null}
-        </AbsoluteFill>
-      ) : null}
-      {f < T.transitions.maskGrowEye[0] ? (
-        <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0 }}>
-          {!screen ? (
-            <>
-              <defs>
-                <clipPath id="eyeLid">
-                  <path d={place(almond(cy), s)} />
-                </clipPath>
-              </defs>
-              <circle cx={EYE.x} cy={EYE.y} r={3.6 * s} fill={C.ink} clipPath="url(#eyeLid)" />
-            </>
-          ) : null}
-          <path d={place(LOWER, s)} fill="none" stroke={C.ink} strokeWidth={EYE_STROKE} strokeLinecap="round" />
-          <path d={place(lidCurve(cy), s)} fill="none" stroke={C.ink} strokeWidth={EYE_STROKE} strokeLinecap="round" />
-        </svg>
-      ) : null}
     </AbsoluteFill>
   );
 };
 
-/** f555–570: one beat of pure black that keeps a 1px grain flicker. */
-export const Black: React.FC = () => {
-  const f = useCurrentFrame();
-  return (
-    <AbsoluteFill style={{ background: "#000000" }}>
-      <Texture f={f} blend="normal" strength={0.6} />
-      <div style={{ position: "absolute", left: Math.floor(random(`blk-x${Math.floor(f)}`) * W), top: Math.floor(random(`blk-y${Math.floor(f)}`) * H), width: 1, height: 1, background: "#1A1A1A" }} />
-    </AbsoluteFill>
-  );
-};
+/* ================================================================== S10 · "And your Pod is here" (660–720) */
 
-/* ================================================================== S10 · "And your Pod is here." (570–630) */
+/**
+ * Premium arrival: G1 night mesh (slow drift) over a dark glossy floor with a hard horizon line.
+ * The white EV drives in from the right (fast in, expoOut stop, motion blur only while fast), stops
+ * centre on a hard contact shadow, with a faint mirrored reflection that is part of the floor.
+ * Its headlight shapes switch on (flat fill) as it stops.
+ */
+const EV = { src: "vehicles/fleet-c-34.png", srcW: 1033, srcH: 576, w: 900, cy: 1100, horizon: 1172 };
+const EVK = EV.w / EV.srcW;
+const EVH = EV.srcH * EVK;
+// headlight shapes traced on fleet-c-34 (source px)
+const LIGHTS = [
+  "M 284 268 L 330 246 L 420 230 L 476 224 L 470 242 L 420 258 L 340 274 L 292 278 Z",
+  "M 48 258 L 56 236 L 80 212 L 84 226 L 72 250 L 56 266 Z",
+];
 
-/** The night map is the day map's road network, as white strokes over G1, pickup at PIN_AT. */
-const NIGHT = { k: 1.7, pin: { x: 960, y: 640 } };
-export const PARK = { x: 960, y: 762, size: 230, heading: 0 };
-const toNight = (p: Pt) => ({ x: (p.x - PICKUP.x) * NIGHT.k + NIGHT.pin.x, y: (p.y - PICKUP.y) * NIGHT.k + NIGHT.pin.y });
+export const evX = (f: number) => mix(W / 2 + 1500, W / 2, tw(f, T.s10.carIn[0], T.s10.carIn[1], 0, 1, EASE.expoOut));
 
-type Stroke = { d: string; len: number; delay: number; w: number; a: number };
-const NIGHT_STROKES: Stroke[] = (() => {
-  const out: Stroke[] = [];
-  const style = { minor: { w: 1.3, a: 0.34 }, arterial: { w: 2.6, a: 0.62 }, expressway: { w: 4.2, a: 0.82 }, shore: { w: 2.2, a: 0.7 } } as const;
-  const add = (pts: Pt[], cls: keyof typeof style) => {
-    const fp = pts.map(toNight);
-    // split at the vertex nearest the pin; both halves draw outward from there
-    let best = 0;
-    let bd = Infinity;
-    fp.forEach((p, i) => {
-      const d = Math.hypot(p.x - NIGHT.pin.x, p.y - NIGHT.pin.y);
-      if (d < bd) {
-        bd = d;
-        best = i;
-      }
-    });
-    for (const part of [fp.slice(0, best + 1).reverse(), fp.slice(best)]) {
-      if (part.length < 2) continue;
-      const d = toPath(part);
-      out.push({ d, len: getLength(d), delay: bd, ...style[cls] });
-    }
-  };
-  ROADS.forEach((r) => add(r.pts, r.cls));
-  add(LAGOON.slice(0, LAGOON.length - 2), "shore");
-  add(CREEK, "shore");
-  return out;
-})();
-const MAX_D = Math.hypot(W, H);
-
-const NightMap: React.FC<{ f: number }> = ({ f }) => {
-  const [a, b] = T.s10.roads;
-  const half = (b - a) / 2;
-  const rb = toNight(ROUNDABOUT.c);
-  return (
-    <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}>
-      <path d={toPoly(LAGOON.map(toNight))} fill="rgba(166,203,227,0.10)" />
-      <path d={toPoly(CREEK.map(toNight))} fill="rgba(166,203,227,0.10)" />
-      {NIGHT_STROKES.map((st, i) => {
-        const t0 = a + (st.delay / MAX_D) * half * 1.6;
-        const p = tw(f, t0, t0 + half, 0, 1, EASE.expoOut);
-        if (p <= 0) return null;
-        return <path key={i} d={st.d} fill="none" stroke={`rgba(255,255,255,${st.a})`} strokeWidth={st.w} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${st.len} ${st.len}`} strokeDashoffset={st.len * (1 - p)} />;
-      })}
-      {f >= a + half ? <circle cx={rb.x} cy={rb.y} r={ROUNDABOUT.r * NIGHT.k} fill="none" stroke="rgba(255,255,255,0.62)" strokeWidth={2.6} /> : null}
+const EVCar: React.FC<{ lights: boolean; withShadow?: boolean }> = ({ lights, withShadow = true }) => (
+  <div style={{ position: "relative", width: EV.w, height: EVH }}>
+    {withShadow ? (
+      <svg width={EV.w} height={EVH} viewBox={`0 0 ${EV.srcW} ${EV.srcH}`} style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}>
+        <ellipse cx={520} cy={522} rx={510} ry={46} transform="rotate(-5 520 522)" fill="rgba(0,0,0,0.6)" />
+      </svg>
+    ) : null}
+    <Asset src={EV.src} w={EV.w} style={{ position: "absolute", left: 0, top: 0 }} />
+    <svg width={EV.w} height={EVH} viewBox={`0 0 ${EV.srcW} ${EV.srcH}`} style={{ position: "absolute", left: 0, top: 0 }}>
+      {LIGHTS.map((d) => (
+        <path key={d} d={d} fill={lights ? C.white : "#2C2F36"} />
+      ))}
     </svg>
+  </div>
+);
+
+const EVLayer: React.FC = () => {
+  const f = useCurrentFrame();
+  const x = evX(f);
+  const top = EV.cy - EVH / 2;
+  const lights = f >= T.s10.headlights;
+  return (
+    <AbsoluteFill>
+      {/* reflection: a flipped copy in the floor, 20%, masked off within 200px (part of the floor, not a dissolve) */}
+      <div
+        style={{
+          position: "absolute",
+          left: x - EV.w / 2,
+          top: top + EVH - 18,
+          width: EV.w,
+          height: EVH,
+          transform: "scaleY(-1)",
+          transformOrigin: "50% 0",
+          opacity: 0.2,
+          WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,1) 0px, rgba(0,0,0,0.5) 90px, rgba(0,0,0,0) 200px)",
+          maskImage: "linear-gradient(to top, rgba(0,0,0,1) 0px, rgba(0,0,0,0.5) 90px, rgba(0,0,0,0) 200px)",
+        }}
+      >
+        <EVCar lights={lights} withShadow={false} />
+      </div>
+      <div style={{ position: "absolute", left: x - EV.w / 2, top }}>
+        <EVCar lights={lights} />
+      </div>
+    </AbsoluteFill>
   );
 };
 
 export const S10: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s10;
-  const push = 1 + 0.02 * ((f - T.scenes.s10[0]) / 30);
+  const push = 1 + 0.03 * ((f - T.scenes.s10[0]) / 60);
+  const fast = f >= R.blur[0] && f < R.blur[1];
   return (
     <AbsoluteFill>
-      <G1 f={f} />
-      <AbsoluteFill style={{ transform: `scale(${push.toFixed(4)})`, transformOrigin: `${PARK.x}px ${PARK.y}px` }}>
-        <NightMap f={f} />
-        <div style={{ position: "absolute", left: NIGHT.pin.x - 45, top: NIGHT.pin.y - 90 * (22.5 / 24) }}>
-          <Pin size={90} fill={C.ctaGreen} dot={C.ink} />
-        </div>
-        <PodAt f={f} x={PARK.x} y={PARK.y} size={PARK.size} heading={PARK.heading} headlights={f >= R.headlights ? "white" : "grey"} door={f >= R.door ? 1 : 0} />
+      {/* G1 flipped so its green field sits up behind the headline, never on the horizon (no glow read) */}
+      <G1 f={f * 0.35} style={{ transform: "scaleY(-1)" }} />
+      <AbsoluteFill style={{ transform: `scale(${push.toFixed(4)})`, transformOrigin: `50% ${EV.cy}px` }}>
+        {/* glossy floor: a darker band with a hard horizon line (no glow) */}
+        <div style={{ position: "absolute", left: -40, top: EV.horizon, width: W + 80, height: H - EV.horizon + 80, background: "linear-gradient(180deg, #0B0C12 0%, #07080C 45%, #050508 100%)" }} />
+        <div style={{ position: "absolute", left: -40, top: EV.horizon, width: W + 80, height: 2, background: "rgba(255,255,255,0.16)" }} />
+        {fast ? (
+          <CameraMotionBlur shutterAngle={180} samples={8}>
+            <EVLayer />
+          </CameraMotionBlur>
+        ) : (
+          <EVLayer />
+        )}
       </AbsoluteFill>
-      <MaskRise f={f} at={R.line} lines={[s10.line]} size={TYPE.title} color={C.white} align="center" style={{ position: "absolute", left: 0, width: W, top: 96 }} />
+      <MaskRise f={f} at={R.line} lines={s10.lines} size={TYPE.title} color={C.white} align="center" style={{ position: "absolute", left: 0, width: W, top: 420 }} />
     </AbsoluteFill>
   );
 };
 
-/** S10 → S11: the parked Pod's body grows to fill the frame. */
-export const podMaskPath = (f: number) => {
-  const [a, b] = T.transitions.maskGrowPodMarker;
-  const push = 1 + 0.02 * ((f - T.scenes.s10[0]) / 30);
-  const s0 = (PARK.size / POD_L) * push;
-  return placePath(POD_BODY, PARK.x, PARK.y, growScale(f, a, b, s0, 14), PARK.heading);
-};
+/* ================================================================== S11 · "All yours" (720–780) */
 
-/* ================================================================== S11 · "All yours." (630–690) */
-
-const S12POD = { x: 520, y: 560, size: 470, heading: 0 };
+/** The match cut: THE POD appears exactly where the car stood, nose left, at the car's length. */
+const MATCH = { x: W / 2, y: EV.cy + 30, size: EV.w * 0.94, heading: 270 };
+const S11POD = { x: W / 2, y: 820, size: 700 };
+export const S12POD = { x: W / 2, y: 560, size: 470, heading: 0 };
 
 export const S11: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s11;
   const t0 = T.scenes.s11[0];
-  const glide = tw(f, T.scenes.s11[1] - 12, T.scenes.s11[1], 0, 1, EASE.expoInOut);
-  const heading = 90 + 2 * ((f - t0) / 30);
+  const up = tw(f, t0 + 2, t0 + 14, 0, 1, EASE.expoInOut);
+  const glide = tw(f, R.glide[0], R.glide[1], 0, 1, EASE.expoInOut);
+  const spin = 2 * ((f - t0) / 30);
+  let x = mix(MATCH.x, S11POD.x, up);
+  let y = mix(MATCH.y, S11POD.y, up);
+  let size = mix(MATCH.size, S11POD.size, up);
+  let heading = MATCH.heading + spin;
+  x = mix(x, S12POD.x, glide);
+  y = mix(y, S12POD.y, glide);
+  size = mix(size, S12POD.size, glide);
+  heading = mix(heading, 360, glide);
   return (
     <AbsoluteFill>
       <G3 f={f} />
-      <PodAt
-        f={f}
-        x={mix(960, S12POD.x, glide)}
-        y={mix(430, S12POD.y, glide)}
-        size={mix(640, S12POD.size, glide)}
-        heading={mix(heading, 0, glide)}
-        seatFill={tw(f, R.seat[0], R.seat[1], 0, 1, EASE.expoOut)}
-        bodyFlood={tw(f, R.flood[0], R.flood[1], 0, 1, EASE.expoOut)}
-      />
-      <div style={{ position: "absolute", left: (W - textWidth(s11.line, TYPE.word)) / 2, top: 750 }}>
+      <PodAt f={f} x={x} y={y} size={size} heading={heading} seatFill={tw(f, R.seat[0], R.seat[1], 0, 1, EASE.expoOut)} bodyFlood={tw(f, R.flood[0], R.flood[1], 0, 1, EASE.expoOut)} />
+      <div style={{ position: "absolute", left: (W - textWidth(s11.line, TYPE.word)) / 2, top: 1150 }}>
         <FillSweep f={f} at={R.line} text={s11.line} size={TYPE.word} />
       </div>
     </AbsoluteFill>
   );
 };
 
-/* ================================================================== S12 · Catch a call / nap / breath (690–780) */
+/* ================================================================== S12 · Catch a call / nap / breath (780–870) */
 
 const ROAD_X = S12POD.x;
 
 /** Top-down city sliding past: ground layer (roads, parks) and a faster rooftop layer for parallax. */
 const ScrollMap: React.FC<{ f: number }> = ({ f }) => {
   const t = (f - T.scenes.s12[0]) / 30;
-  const yA = t * 420; // px travelled by the ground
-  const yB = t * 620; // rooftops are nearer: faster
+  const yA = t * 420;
+  const yB = t * 620;
   const CELL = 300;
   const rows = Math.ceil(H / CELL) + 2;
   const k0 = Math.floor(yA / CELL);
   const kb0 = Math.floor(yB / CELL);
-  const vroads = [70, 300, ROAD_X, 760, 1010, 1290, 1560, 1840];
+  const vroads = [60, 300, ROAD_X, 780, 1020];
   return (
     <AbsoluteFill style={{ background: C.map.land, overflow: "hidden" }}>
-      {/* ground */}
       <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0 }}>
         {Array.from({ length: rows }, (_, r) => {
           const k = k0 - r + 1;
@@ -261,10 +224,8 @@ const ScrollMap: React.FC<{ f: number }> = ({ f }) => {
             <path d={`M ${x} -20 L ${x} ${H + 20}`} stroke={C.map.road} strokeWidth={x === ROAD_X ? 78 : 10} />
           </g>
         ))}
-        {/* lane dashes on the Pod's road move with the ground */}
         <path d={`M ${ROAD_X} -60 L ${ROAD_X} ${H + 60}`} stroke={C.map.casing} strokeWidth={4} strokeDasharray="34 46" strokeDashoffset={-(yA % 80)} />
       </svg>
-      {/* rooftops (hard 10% offset shadow, no blur) */}
       <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0 }}>
         {Array.from({ length: Math.ceil(H / CELL) + 2 }, (_, r) => {
           const k = kb0 - r + 1;
@@ -294,9 +255,10 @@ const ScrollMap: React.FC<{ f: number }> = ({ f }) => {
   );
 };
 
-const ROWS_Y = [250, 470, 690];
-const ICON = 120;
-const TEXT_X = 1110;
+const ROWS_Y = [1030, 1200, 1370];
+const ICON = 110;
+const ICON_X = SAFE.x0 + 10;
+const TEXT_X = ICON_X + ICON + 40;
 
 export const S12: React.FC = () => {
   const f = useCurrentFrame();
@@ -312,17 +274,17 @@ export const S12: React.FC = () => {
       <PodAt f={f} x={S12POD.x} y={S12POD.y} size={S12POD.size} heading={0} seatFill={1} bodyFlood={1} />
       {s12.lines.map((ln, i) => {
         const at = R.beats[i];
-        if (f < at - SLICE_DUR) return null; // the line slices in to lock on the beat; the icon lands on it
+        if (f < at - SLICE_DUR) return null;
         const next = R.beats[i + 1];
         const back = next === undefined ? 0 : tw(f, next, next + 6, 0, 1, EASE.expoOut);
         const col = mixHex(C.ink, C.muted, back);
         const sc = mix(1, 0.85, back);
         return (
-          <div key={i} style={{ position: "absolute", left: 960, top: ROWS_Y[i] - ICON / 2, transform: `scale(${sc.toFixed(4)})`, transformOrigin: "0 50%" }}>
+          <div key={i} style={{ position: "absolute", left: ICON_X, top: ROWS_Y[i] - ICON / 2, transform: `scale(${sc.toFixed(4)})`, transformOrigin: "0 50%" }}>
             <ScaleCut f={f} at={at} from={2} style={{ position: "absolute", left: 0, top: 0 }}>
               {icons[i](col)}
             </ScaleCut>
-            <div style={{ position: "absolute", left: TEXT_X - 960, top: ICON / 2 - (TYPE.step * 1.08) / 2 }}>
+            <div style={{ position: "absolute", left: TEXT_X - ICON_X, top: ICON / 2 - (TYPE.step * 1.08) / 2 }}>
               <Slice f={f} lock={at} lines={[ln]} size={TYPE.step} color={col} />
             </div>
           </div>
@@ -332,14 +294,12 @@ export const S12: React.FC = () => {
   );
 };
 
-export const S12_POD = S12POD;
+/* ================================================================== S13 · "Pod Solo" (870–930) */
 
-/* ================================================================== S13 · "Pod Solo." (780–840) */
-
-const CAR = { w: 660, srcW: 501, srcH: 332, contactY: 0.86 };
+const CAR = { w: 860, srcW: 501, srcH: 332, contactY: 0.86 };
 /** The road the car drives along: a ctaGreen line in perspective, from the bottom edge to a vanishing point. */
-const ROAD = { a: { x: 1458, y: 1100 }, v: { x: 600, y: 330 }, w0: 30, w1: 2 };
-const C0 = { x: 960, y: 653 }; // the car's contact point once settled (on the road)
+const C0 = { x: W / 2, y: 1190 }; // the car's contact point once settled (on the road)
+const ROAD = { a: { x: C0.x + 340 * 2, y: C0.y + 350 * 2 }, v: { x: C0.x - 340, y: C0.y - 350 }, w0: 34, w1: 2 };
 
 const RoadLine: React.FC<{ t: number }> = ({ t }) => {
   if (t <= 0) return null;
@@ -367,16 +327,14 @@ const RoadLine: React.FC<{ t: number }> = ({ t }) => {
 export const S13: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s13;
-  const settle = tw(f, R.settle[0], R.settle[1], 0, 1, EASE.expoInOut); // sits on the Pod's spot at the cut, then moves onto the road
+  const settle = tw(f, R.settle[0], R.settle[1], 0, 1, EASE.expoInOut);
   const pull = tw(f, R.pull[0], R.pull[1], 0, 1, EASE.quintIn); // speed ramp: starts slow, accelerates away
-  const start = { x: S12POD.x, y: S12POD.y + 140 };
+  const start = { x: S12POD.x, y: S12POD.y + 200 };
   const onRoad = { x: mix(C0.x, ROAD.v.x, 0.62 * pull), y: mix(C0.y, ROAD.v.y, 0.62 * pull) };
   const cx = mix(start.x, onRoad.x, settle);
   const cy = mix(start.y, onRoad.y, settle);
-  const s = mix(mix(0.78, 1, settle), 0.4, pull);
-  const k = CAR.w / CAR.srcW;
-  const h = CAR.srcH * k;
-  // the Pod outline from S12 erases off the car on the cut
+  const s = mix(mix(0.6, 1, settle), 0.4, pull);
+  const h = CAR.srcH * (CAR.w / CAR.srcW);
   const o = tw(f, R.outline[0], R.outline[1], 0, 1, EASE.linear);
   const outline = placePath(POD_BODY, S12POD.x, S12POD.y, S12POD.size / POD_L, 0);
   const ev = evolvePath(Math.max(0.0001, 1 - o), outline);
@@ -385,7 +343,6 @@ export const S13: React.FC = () => {
       <G3 f={f} />
       <RoadLine t={tw(f, R.road[0], R.road[1], 0, 1, EASE.expoOut)} />
       <div style={{ position: "absolute", left: cx - CAR.w / 2, top: cy - h * CAR.contactY, width: CAR.w, height: h, transform: `scale(${s.toFixed(4)})`, transformOrigin: `50% ${CAR.contactY * 100}%` }}>
-        {/* flat, hard-edged contact shadow (ink 18%, no blur) */}
         <svg width={CAR.w} height={h} viewBox={`0 0 ${CAR.srcW} ${CAR.srcH}`} style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}>
           <ellipse cx={250} cy={262} rx={262} ry={44} transform="rotate(8 250 262)" fill="rgba(16,17,17,0.18)" />
         </svg>
@@ -396,34 +353,39 @@ export const S13: React.FC = () => {
           <path d={outline} fill="none" stroke={C.ctaGreen} strokeWidth={6} strokeLinejoin="round" strokeDasharray={ev.strokeDasharray} strokeDashoffset={ev.strokeDashoffset} />
         </svg>
       ) : null}
-      {/* bottom-left, clear of the road */}
-      <Slice f={f} lock={R.lineLock} lines={[s13.line]} size={TYPE.word} style={{ position: "absolute", left: 120, top: 820 }} />
+      <Slice f={f} lock={R.lineLock} lines={[s13.line]} size={TYPE.word} style={{ position: "absolute", left: (W - textWidth(s13.line, TYPE.word)) / 2, top: 300 }} />
     </AbsoluteFill>
   );
 };
 
-/* ================================================================== S14 · end frame "Pod Now." (840–900) */
+/* ================================================================== S14 · end card (930–990) */
+
+/**
+ * Solid night, everything flat ctaGreen: S mark (200px, centred at y≈720) with "Shuttlers" set in
+ * Google Sans 700 under it, "Pod Now" (160px, maskRise f940), then Safe · Set · Smooth as a spaced
+ * 56px row slicing in one per half-beat. The whole lockup pushes in 2% over f930–990.
+ */
+const END = { markH: 200, markCy: 720, logo: 64, line: 1000, tags: 1220, tagSize: 56, tagGap: 64 };
 
 export const S14: React.FC = () => {
   const f = useCurrentFrame();
   const R = T.s14;
-  const push = 1 + 0.02 * tw(f, R.push[0], R.push[1], 0, 1, EASE.linear) + 0.008 * tw(f, T.scenes.s14[0], R.push[0], 0, 1, EASE.linear);
-  const tagSize = TYPE.step;
-  const gap = 44;
-  const tagW = s14.tags.map((t) => textWidth(t, tagSize));
-  const total = tagW.reduce((a, b) => a + b, 0) + gap * (s14.tags.length - 1);
+  const push = 1 + 0.02 * tw(f, R.push[0], R.push[1], 0, 1, EASE.linear);
+  const tagW = s14.tags.map((t) => textWidth(t, END.tagSize));
+  const total = tagW.reduce((a, b) => a + b, 0) + END.tagGap * (s14.tags.length - 1);
   let x = (W - total) / 2;
+  const markW = END.markH * (1212 / 1532);
   return (
-    <AbsoluteFill>
-      <G2 f={f} tone="end" />
+    <AbsoluteFill style={{ background: C.night }}>
       <AbsoluteFill style={{ transform: `scale(${push.toFixed(4)})`, transformOrigin: "50% 50%" }}>
-        <ScaleCut f={f} at={R.mark} style={{ position: "absolute", left: W / 2 - 66, top: 168 }}>
-          <SMark size={168} color={C.ink} />
+        <ScaleCut f={f} at={R.mark} style={{ position: "absolute", left: W / 2 - markW / 2, top: END.markCy - END.markH / 2 }}>
+          <SMark size={END.markH} color={C.ctaGreen} />
         </ScaleCut>
-        <MaskRise f={f} at={R.line} lines={wrapLines(s14.line, TYPE.hero, 1600)} size={TYPE.hero} align="center" style={{ position: "absolute", left: 0, width: W, top: 410 }} />
+        <div style={{ position: "absolute", left: 0, width: W, top: END.markCy + END.markH / 2 + 18, textAlign: "center", ...typeStyle({ size: END.logo, color: C.ctaGreen, lh: 1.1 }) }}>{s14.logo}</div>
+        <MaskRise f={f} at={R.line} lines={[s14.line]} size={TYPE.hero} color={C.ctaGreen} align="center" style={{ position: "absolute", left: 0, width: W, top: END.line }} />
         {s14.tags.map((t, i) => {
-          const el = <Slice key={t} f={f} lock={R.tagLocks[i]} lines={[t]} size={tagSize} style={{ position: "absolute", left: x, top: 660 }} />;
-          x += tagW[i] + gap;
+          const el = <Slice key={t} f={f} lock={R.tagLocks[i]} lines={[t]} size={END.tagSize} color={C.ctaGreen} style={{ position: "absolute", left: x, top: END.tags }} />;
+          x += tagW[i] + END.tagGap;
           return el;
         })}
       </AbsoluteFill>

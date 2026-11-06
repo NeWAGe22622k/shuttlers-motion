@@ -25,8 +25,8 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="Edu2-9x16" component={EduVideo2} durationInFrames={T.edu.duration} fps={T.fps} width={1080} height={1920} defaultProps={{ fmt: "9x16" as const }} />
     <Composition id="Edu-PodPreview" component={PodPreview} durationInFrames={1} fps={30} width={2000} height={1000} />
     {/* Build aid: one rebuilt screen at 393×852 with an optional ReferenceOverlay (props: screen, overlay). */}
-    {/* Video 2 · How to book Pod Solo (Pod Now), 16:9 (brief: "Shuttlers Pod — Video 2 … 16:9") */}
-    <Composition id="PodVideo2-16x9" component={PodVideo2} durationInFrames={timing2.duration} fps={timing2.fps} width={1920} height={1080} defaultProps={{ grain: true, audio: true }} />
+    {/* Video 2 · How to book Pod Solo (Pod Now): portrait master (revision 3). The 16:9 cut is retired. */}
+    <Composition id="PodVideo2-9x16" component={PodVideo2} durationInFrames={timing2.duration} fps={timing2.fps} width={1080} height={1920} defaultProps={{ grain: true, audio: true }} />
     <Composition id="Components-Preview-V2" component={Components2} durationInFrames={120} fps={30} width={1920} height={1080} />
     {/* PodVideo2-16x9 build aid: rebuilt screen + 3× reference overlay (props: screen, overlay). */}
     <Composition id="ScreenCheck2" component={ScreenCheck2} durationInFrames={1} fps={30} width={393} height={852} defaultProps={{ screen: "home" as const, overlay: 0.5 }} />

@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const [id, ...frames] = process.argv.slice(2);
-const prefix = process.env.PREFIX ?? (id === "PodHero-16x9" ? "f" : id === "PodCutdown-16x9" ? "c" : id === "PodVideo2-16x9" ? "v2" : id);
+const prefix = process.env.PREFIX ?? (id === "PodHero-16x9" ? "f" : id === "PodCutdown-16x9" ? "c" : id === "PodVideo2-9x16" ? "p" : id);
 const inputProps = process.env.PROPS ? JSON.parse(process.env.PROPS) : {};
 const serveUrl = await bundle({ entryPoint: path.resolve("src/index.ts") });
 const browserExecutable = [

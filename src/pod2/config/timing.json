@@ -1,7 +1,7 @@
 {
- "_doc": "PodVideo2-16x9 (How to book Pod Solo, Pod Now). 30fps, 900f. BPM 120: beat n = frame n*15 = sample n*24000 (48 kHz); an audio cue at frame F sits at sample round(F*1600). Every accent's visual hit frame equals its audio cue frame. Cues are on the beat grid unless listed under audio.offbeat. Read by src/pod2 and audio/build_v2_16x9_audio.py.",
+ "_doc": "PodVideo2-9x16 (How to book Pod Solo, Pod Now), revision 3. 1080x1920, 30fps, 990f (33s). BPM 120: beat n = frame 15n = sample 24000n; an audio cue at frame F sits at sample round(F*1600). Every accent's visual hit frame equals its audio cue frame. Cues are on the beat grid unless listed under audio.offbeat. Read by src/pod2 and audio/build_v2_16x9_audio.py.",
  "fps": 30,
- "duration": 900,
+ "duration": 990,
  "bpm": 120,
  "beat": 15,
  "bar": 60,
@@ -38,56 +38,57 @@
    450,
    510
   ],
-  "s9": [
+  "s8b": [
    510,
-   570
+   555
+  ],
+  "s8c": [
+   555,
+   600
+  ],
+  "s9": [
+   600,
+   660
   ],
   "s10": [
-   570,
-   630
+   660,
+   720
   ],
   "s11": [
-   630,
-   690
-  ],
-  "s12": [
-   690,
+   720,
    780
   ],
-  "s13": [
+  "s12": [
    780,
-   840
+   870
+  ],
+  "s13": [
+   870,
+   930
   ],
   "s14": [
-   840,
-   900
+   930,
+   990
   ]
  },
  "transitions": {
   "wipe": [
    60,
-   150,
-   840
+   150
   ],
   "wipeDur": 12,
   "maskGrowPodTile": [
    180,
    190
   ],
-  "maskGrowEye": [
-   540,
-   555
-  ],
-  "eyeContentUntil": 547,
-  "maskGrowPodMarker": [
-   630,
-   642
-  ],
   "hardCuts": [
    120,
-   510,
-   570,
-   780
+   600,
+   660,
+   720,
+   780,
+   870,
+   930
   ]
  },
  "s1": {
@@ -101,12 +102,11 @@
  "s2": {
   "words": [
    60,
-   75,
-   90
+   75
   ],
   "sweep": [
-   96,
-   106
+   90,
+   100
   ]
  },
  "s3": {
@@ -129,7 +129,7 @@
  },
  "phone": {
   "in": 180,
-  "out": 510
+  "out": 600
  },
  "s5": {
   "pulses": [
@@ -143,6 +143,10 @@
   "push": [
    250,
    260
+  ],
+  "liftBack": [
+   256,
+   266
   ]
  },
  "s6": {
@@ -189,7 +193,11 @@
    332,
    352
   ],
-  "lift": 332
+  "lift": 332,
+  "liftBack": [
+   344,
+   354
+  ]
  },
  "s7": {
   "rows": [
@@ -215,6 +223,10 @@
   "maxPayRoll": [
    432,
    448
+  ],
+  "liftBack": [
+   436,
+   446
   ]
  },
  "s8": {
@@ -252,95 +264,106 @@
   "check": [
    495,
    507
+  ],
+  "liftBack": [
+   496,
+   506
   ]
  },
  "s9": {
-  "eyeSize": 240,
+  "word": 220,
   "blinks": [
-   [
-    518,
-    526
-   ],
-   [
-    533,
-    541
-   ]
+   615,
+   633
   ],
-  "windowScale": 4.0,
-  "black": [
-   555,
-   570
-  ]
+  "blinkHalf": 4,
+  "close": [
+   650,
+   658
+  ],
+  "slit": 6
  },
  "s10": {
-  "roads": [
-   570,
-   582
+  "carIn": [
+   660,
+   690
   ],
-  "headlights": 576,
-  "line": 580,
-  "door": 590
+  "blur": [
+   660,
+   670
+  ],
+  "line": 675,
+  "headlights": 690,
+  "door": 700
  },
  "s11": {
   "seat": [
-   632,
-   640
+   722,
+   730
   ],
   "flood": [
-   645,
-   659
+   735,
+   749
   ],
-  "line": 645
+  "line": 735,
+  "glide": [
+   768,
+   780
+  ]
  },
  "s12": {
   "beats": [
-   690,
-   720,
-   750
+   780,
+   810,
+   840
   ],
   "phoneRock": [
-   690,
-   705
+   780,
+   795
   ],
   "napClose": [
-   720,
-   730
+   810,
+   820
   ],
   "breathDraw": [
-   750,
-   762
+   840,
+   852
   ]
  },
  "s13": {
   "outline": [
-   780,
-   790
+   870,
+   880
   ],
   "road": [
-   780,
-   792
+   870,
+   882
   ],
   "settle": [
-   780,
-   794
+   870,
+   884
   ],
-  "lineLock": 795,
+  "lineLock": 885,
   "pull": [
-   794,
-   840
+   884,
+   930
   ]
  },
  "s14": {
-  "mark": 845,
-  "line": 848,
+  "mark": 930,
+  "line": 940,
   "tagLocks": [
-   855,
-   870,
-   885
+   952,
+   960,
+   968
   ],
   "push": [
-   870,
-   900
+   930,
+   990
+  ],
+  "iconOut": [
+   930,
+   936
   ]
  },
  "taps": [
@@ -369,17 +392,16 @@
  },
  "audio": {
   "sampleRate": 48000,
-  "_doc": "onGrid cues must be multiples of 15 frames (asserted). offbeat cues are deliberate and the groove drops any non-beat event within 60 ms of them.",
+  "_doc": "onGrid cues must be multiples of 15 frames (asserted). offbeat cues are deliberate; the groove drops any non-beat event within 60 ms of them.",
   "build": [
    0,
    60
   ],
   "drop": 60,
-  "thinFrom": 510,
-  "halt": 570,
-  "backIn": 630,
-  "drumsOutAfter": 870,
-  "end": 900,
+  "halt": 600,
+  "backIn": 660,
+  "drumsOutAfter": 975,
+  "end": 990,
   "onGrid": {
    "clack": [
     15
@@ -394,7 +416,9 @@
     180,
     270,
     360,
-    450
+    450,
+    510,
+    555
    ],
    "taps": [
     240,
@@ -407,27 +431,25 @@
    "pin": [
     330
    ],
-   "lastHit": [
-    555
+   "blinks": [
+    615
    ],
    "backIn": [
-    630
+    660
    ],
    "plucks": [
-    690,
-    720,
-    750
-   ],
-   "whoosh": [
-    780
-   ],
-   "finalHit": [
+    780,
+    810,
     840
    ],
+   "whoosh": [
+    870
+   ],
+   "finalHit": [
+    930
+   ],
    "endTicks": [
-    855,
-    870,
-    885
+    960
    ]
   },
   "offbeat": {
@@ -456,16 +478,18 @@
     478
    ],
    "blinks": [
-    522,
-    537
+    633
    ],
    "door": [
-    590
+    700
    ],
    "wipes": [
     54,
-    144,
-    834
+    144
+   ],
+   "endTicks": [
+    952,
+    968
    ]
   },
   "keysOnGrid": [
@@ -475,8 +499,8 @@
    465
   ],
   "swell": [
-   645,
-   690
+   735,
+   780
   ],
   "whooshLen": 32
  },
@@ -494,21 +518,26 @@
    375,
    465
   ],
-  "lineOut": 4
+  "lineOut": 4,
+  "headerOut": 506,
+  "clipOpen": [
+   506,
+   516
+  ]
  },
  "camera": {
   "to": [
-   600,
-   540
+   540,
+   900
   ],
   "keys": [
    {
     "at": 188,
     "roi": [
-     196,
-     392
+     196.5,
+     340
     ],
-    "zoom": 1.5
+    "zoom": 1.23
    },
    {
     "at": 246,
@@ -517,18 +546,18 @@
    {
     "at": 260,
     "roi": [
-     196,
+     196.5,
      232
     ],
-    "zoom": 1.75
+    "zoom": 1.23
    },
    {
     "at": 321,
     "roi": [
-     214,
+     196.5,
      300
     ],
-    "zoom": 1.45
+    "zoom": 1.23
    },
    {
     "at": 352,
@@ -537,18 +566,18 @@
    {
     "at": 362,
     "roi": [
-     196,
-     548
+     196.5,
+     560
     ],
-    "zoom": 1.6
+    "zoom": 1.23
    },
    {
     "at": 424,
     "roi": [
-     196,
-     512
+     196.5,
+     520
     ],
-    "zoom": 1.7
+    "zoom": 1.23
    },
    {
     "at": 444,
@@ -557,19 +586,52 @@
    {
     "at": 452,
     "roi": [
-     196,
-     392
+     196.5,
+     400
     ],
-    "zoom": 1.6
+    "zoom": 1.23
    },
    {
     "at": 486,
     "roi": [
-     196,
+     196.5,
      640
     ],
-    "zoom": 1.45
+    "zoom": 1.23
+   },
+   {
+    "at": 506,
+    "roi": [
+     196.5,
+     426
+    ],
+    "zoom": 0.736,
+    "to": [
+     540,
+     865
+    ]
    }
+  ],
+  "_doc": "zoom 1.23 centred on the screen: app content (inside its 17pt margins) stays inside x 90\u2013990 and 13.5pt labels read at \u226532px"
+ },
+ "s8b": {
+  "push": [
+   510,
+   520
+  ],
+  "shapes": [
+   516,
+   532
+  ]
+ },
+ "s8c": {
+  "push": [
+   555,
+   565
+  ],
+  "progress": [
+   565,
+   598
   ]
  }
 }

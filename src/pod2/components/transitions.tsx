@@ -42,9 +42,9 @@ export const GradientWipe: React.FC<{ f: number; at: number; from: React.ReactNo
         style={{
           position: "absolute",
           left: e - BAND_H / 2 - BAND / 2,
-          top: H / 2 - 900,
+          top: H / 2 - H,
           width: BAND,
-          height: 1800,
+          height: H * 2,
           transform: "rotate(12deg)",
           transformOrigin: "50% 50%",
           background: g4Css("90deg"),

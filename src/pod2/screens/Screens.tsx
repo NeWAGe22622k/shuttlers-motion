@@ -246,7 +246,13 @@ export const SearchScreen: React.FC<{ f: number; letters: number; caret: boolean
           })}
           <div style={{ position: "absolute", left: 33, top: 458, width: 326, height: 56, borderRadius: 12, background: C.card, display: "flex", alignItems: "center", gap: 10, padding: "0 14px", boxSizing: "border-box" }}>
             <I.info size={18} color={C.muted} stroke={1.7} />
-            <span style={{ fontSize: 11.5, color: "#5d615f", fontWeight: 500, lineHeight: 1.35 }}>{S.info}</span>
+            <span style={{ fontSize: 11.5, color: "#5d615f", fontWeight: 500, lineHeight: 1.35 }}>
+              {S.info.map((l) => (
+                <span key={l} style={{ display: "block" }}>
+                  {l}
+                </span>
+              ))}
+            </span>
           </div>
         </>
       ) : null}
@@ -624,8 +630,12 @@ export const PodBookedScreen: React.FC<{ shapes: number }> = ({ shapes }) => {
       <div style={{ position: "absolute", right: 22, top: 82 }}>
         <I.close size={22} color={C.ink} stroke={2} />
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 552, textAlign: "center", fontSize: 22, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>{B.title}</div>
-      <div style={{ position: "absolute", left: 32, right: 32, top: 592, textAlign: "center", fontSize: 13.5, fontWeight: 500, color: "#5d615f", lineHeight: 1.45 }}>{B.body}</div>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 550, textAlign: "center", fontSize: 23, fontWeight: 700, color: C.ink, letterSpacing: -0.3 }}>{B.title}</div>
+      <div style={{ position: "absolute", left: 32, right: 32, top: 592, textAlign: "center", fontSize: 13.5, fontWeight: 500, color: "#5d615f", lineHeight: 1.45 }}>
+        {B.body.map((l) => (
+          <div key={l}>{l}</div>
+        ))}
+      </div>
       <div style={{ position: "absolute", left: 20, top: 748 }}>
         <Btn label={B.cta} w={353} h={50} style={{ fontSize: 14 }} />
       </div>

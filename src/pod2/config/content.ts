@@ -1,22 +1,23 @@
 // PodVideo2-16x9 · every visible string. The story copy (home … s14, trip) is the content
-// manager's shot list, word for word. `app` holds the in-app UI strings, copied from the
+// manager's shot list, word for word, with every full stop removed (revision 3: no full stops anywhere;
+// in-app sentences that ran into each other are set as separate lines instead). `app` holds the in-app UI strings, copied from the
 // reference screenshots (public/screens/01–09) with personal data removed.
 
 export const home = { time: "8:50", greeting: "Hi, Tolu" };
-export const s1 = { clockFrom: "8:49", clockTo: "8:50", line: "Let's get you moving." };
-export const s2 = { line: "Like, right now." };
-export const s3 = { line: "Pod Solo." };
-export const s4 = { line: "Here's how." };
-export const s5 = { step: "1", line: "Open Shuttlers. Tap Pod." };
-export const s6 = { step: "2", line: "Set your destination.", query: "filmhouse" };
-export const s7 = { step: "3", line: "Choose Pod Solo." };
-export const s8 = { step: "4", line: "Pay your way." };
-export const s9 = { line: "Blink." };
-export const s10 = { line: "And your Pod is here." };
-export const s11 = { line: "All yours." };
-export const s12 = { lines: ["Catch a call.", "Catch a nap.", "Catch your breath."] };
-export const s13 = { line: "Pod Solo." };
-export const s14 = { line: "Pod Now.", tags: ["Safe.", "Set.", "Smooth."] };
+export const s1 = { clockFrom: "8:49", clockTo: "8:50", line: "Let's get you moving" };
+export const s2 = { lines: ["Like", "right now"] };
+export const s3 = { line: "Pod Solo" };
+export const s4 = { line: "Here's how" };
+export const s5 = { step: "1", lines: ["Open Shuttlers", "Tap Pod"] };
+export const s6 = { step: "2", lines: ["Set your", "destination"], query: "filmhouse" };
+export const s7 = { step: "3", lines: ["Choose", "Pod Solo"] };
+export const s8 = { step: "4", lines: ["Pay your way"] };
+export const s9 = { line: "Blink" };
+export const s10 = { lines: ["And your Pod", "is here"] };
+export const s11 = { line: "All yours" };
+export const s12 = { lines: ["Catch a call", "Catch a nap", "Catch your breath"] };
+export const s13 = { line: "Pod Solo" };
+export const s14 = { line: "Pod Now", tags: ["Safe", "Set", "Smooth"], logo: "Shuttlers" };
 export const trip = {
   pickup: "Jasper Ike Street, Eti-Osa, Lagos",
   dropoff: "Filmhouse Cinemas IMAX Lekki Lagos",
@@ -65,7 +66,7 @@ export const app = {
     locationsTitle: "Locations",
     busStopsTitle: "Bus stops",
     viewAll: "View all",
-    info: "Pick a place to see every way there. Pick a route to book it.",
+    info: ["Pick a place to see every way there", "Pick a route to book it"],
     showAll: "Show all 12 results",
     final: {
       locations: [
@@ -126,10 +127,10 @@ export const app = {
     methods: ["Card", "Bank Transfer", "USSD", "Company wallet · Shuttlers"],
     cta: "Continue to payment",
   },
-  success: { title: "Payment successful", sub: "Your payment went through.", cta: "Done" },
+  success: { title: "Payment successful", sub: "Your payment went through", cta: "Done" },
   booked: {
     title: "Your Pod is booked",
-    body: "We're finding your Pilot now. You'll see who is coming, and their car, the moment one accepts.",
+    body: ["We're finding your Pilot now", "You'll see who is coming, and their car, the moment one accepts"],
     cta: "Okay, got it",
   },
   finding: { title: "Finding your Pod", placeSub: "The Rock Drive, Lagos, Nigeria", quoted: "Quoted", cancel: "Cancel" },

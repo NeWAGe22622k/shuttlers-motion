@@ -49,22 +49,21 @@ Generated audio (`public/audio/`) and renders (`out/`) are not committed. Run bo
 python3 audio/build_audio.py && python3 audio/build_edu_audio.py
 ```
 
-## Video 2 · How to book Pod Solo (Pod Now), 16:9 (`PodVideo2-16x9`)
+## Video 2 · How to book Pod Solo (Pod Now), portrait (`PodVideo2-9x16`)
 
-1920×1080 · 30fps · 900f (30s). Built to the "Shuttlers Pod — Video 2 … 16:9" brief as a self-contained module in `src/pod2/`.
+1080×1920 · 30fps · 990f (33s), revision 3. Built in `src/pod2/`. The earlier 16:9 cut (`PodVideo2-16x9`) is retired; its last render stays in `renders/` for reference.
 
 ```bash
-python3 audio/build_v2_16x9_audio.py      # public/audio/score-v2.wav (+ stems), asserts levels/silence/cues and runs the onset check
-                                          # (groove kicks within ±1 ms of n×0.5 s, no two transients < 50 ms apart) → public/audio/v2-16x9/onset-report.json
-npm run render:v2                          # out/pod-video2-16x9.mp4
-node tools/stills.mjs PodVideo2-16x9 15 45 95   # QA stills → out/qa/v2-<N>.png (PROPS='{"grain":false}' to switch grain off)
+python3 audio/build_v2_16x9_audio.py      # public/audio/score-v2.wav (33.000 s) + stems; asserts levels, the f601–659 silence (only the two
+                                          # blink sounds), cue timing, and the onset check (kicks within ±1 ms of n×0.5 s, transients ≥ 50 ms apart)
+npx remotion render PodVideo2-9x16 out/pod-video2-9x16-rev4.mp4 --codec=h264 --crf=16 --audio-codec=aac
+node tools/stills.mjs PodVideo2-9x16 15 70 989   # QA stills → out/qa/p-<N>.png (PROPS='{"grain":false}' to switch grain off)
 ```
 
-- `src/pod2/config/timing.json`: every frame number and audio cue (read by the TS and by the Python score). Beat n = frame 15n = sample 24000n; a cue at frame F sits at sample round(F×1600). Cues are on the beat grid unless listed under `audio.offbeat`, and every accent's visual hit frame equals its audio cue frame.
-- `src/pod2/components/RoadNet.ts`: the one stylised road network (lagoon, creek, expressway, districts) drawn by the in-app day map and the S10 night map.
-- `src/pod2/config/content.ts`: the content manager's copy, word for word, plus the in-app strings from the screenshots.
-- `src/pod2/config/brand.ts` (tokens, easings, phone/story layout) · `src/pod2/config/gradients.tsx` (G1 night mesh, G2 Pod Flood, G3 paper, G4 stepped band, grain + 4×4 dither).
-- `src/pod2/components/`: THE POD vector, line icons, 3D phone + fingertip taps, type reveals (maskRise, slice, fillSweep, scaleCut), transitions (gradientWipe, maskGrow).
-- `src/pod2/screens/`: screens 01–09 rebuilt at 393×852. Check one against its screenshot with `ScreenCheck2` (`--props='{"screen":"pay","overlay":0.5}'`).
-- `Components-Preview-V2`: p1 every component in every state, p2 every rebuilt screen.
-- `renders/revision-1/`: before/after stills for the revision pass.
+- Safe zone: text and key UI inside x 90–990, y 250–1480. The Shuttlers app icon sits top-right (x 902–990, y 150–238) from f0 to f929.
+- `src/pod2/config/timing.json`: every frame number and audio cue. Beat n = frame 15n = sample 24000n; a cue at frame F sits at sample round(F×1600). Cues are on the beat grid unless listed under `audio.offbeat`; every accent's visual hit frame equals its audio cue frame.
+- `src/pod2/config/content.ts`: the copy, with no full stops anywhere (in-app sentences are set as separate lines).
+- `src/pod2/config/brand.ts` (tokens, phone/story/lift layout) · `src/pod2/config/gradients.tsx` (G1–G4, grain + dither).
+- `src/pod2/components/`: THE POD, line icons, 3D phone + fingertip taps, type reveals, transitions, `RoadNet.ts` (the stylised road network of the in-app map).
+- `src/pod2/screens/`: screens 01–11 rebuilt at 393×852. Check one against its screenshot with `ScreenCheck2` (`--props='{"screen":"booked","overlay":0.5}'`).
+- `Components-Preview-V2`: every component in every state, then every rebuilt screen.
