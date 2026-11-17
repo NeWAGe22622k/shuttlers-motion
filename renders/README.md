@@ -7,3 +7,5 @@ only review/approved cuts are kept here so the repo stays small.
 |---|---|---|---|
 | `edu1-how-pod-works-9x16.mp4` | Education Video 1: How Pod works | 9:16 (1080×1920) | 30 s |
 | `edu2-pod-solo-9x16.mp4` | Education Video 2: How to book Pod Solo (Pod Now) | 9:16 (1080×1920) | 30 s |
+| `sign-shuttlers-cloud-9x16.mp4` | "Your sign": cloud Coaster bus in the real sky (see `sign-cloud/`) | 9:16 (1080×1920) | 9.4 s |
+| `sign-shuttlers-cloud-9x16-4k.mp4` | Same, full source resolution | 9:16 (2160×3840) | 9.4 s |
