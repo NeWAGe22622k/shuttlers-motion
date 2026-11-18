@@ -38,6 +38,7 @@ ap.add_argument('--cap-size', type=float, default=0.046)
 ap.add_argument('--cap1-y', type=float, default=0.14)
 ap.add_argument('--shutter', type=float, default=0.25)
 ap.add_argument('--chroma', type=float, default=1.0, help='how much of the logo colour survives grading (1 = brand colours)')
+ap.add_argument('--brand', type=float, default=1.0, help='0..1 pull of the logo toward exact brand colours')
 ap.add_argument('--cap2-gap', type=float, default=0.018, help='gap between caption 2 and the top of the cloud, fraction of height')
 ap.add_argument('--frames', default='', help='a,b: only process this frame range (preview)')
 ap.add_argument('--scale-out', type=int, default=0, help='output width (0 = source)')
@@ -70,6 +71,20 @@ cg = grade(c, lo=np.percentile(L, 1), hi=np.percentile(L, 99.7), gamma=1.25, haz
 # reduce logo/ambient chroma toward neutral (keeps a soft blue tint in the letters)
 lum = cg[..., :3] @ np.array([0.2126, 0.7152, 0.0722], np.float32)
 cg[..., :3] = lum[..., None] + (cg[..., :3] - lum[..., None]) * args.chroma
+# brand-colour correction on the logo only: overcast shading + haze darken/dull the dyed cloud, so pull the
+# green back to Shuttlers green #21E582 (keeping a little of the cloud's own shading) and the letters to near-black
+BRAND_GREEN = np.array([33, 229, 130], np.float32) / 255
+_lum = cg[..., :3] @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+_sat = cg[..., 1] - cg[..., 0]
+wg = np.clip((_sat - 0.05) / 0.10, 0, 1); wg = wg * wg * (3 - 2 * wg)
+core = wg > 0.9
+if core.any():
+    shade = np.clip(_lum / np.median(_lum[core]), 0.8, 1.08)[..., None]
+    target = BRAND_GREEN * shade
+    cg[..., :3] = cg[..., :3] * (1 - wg[..., None] * args.brand) + target * (wg[..., None] * args.brand)
+wk = np.clip((0.40 - _lum) / 0.12, 0, 1) * (cg[..., 3] > 0.5)
+wk = wk * wk * (3 - 2 * wk)
+cg[..., :3] *= (1 - 0.55 * args.brand * wk)[..., None]
 ch, cw_ = cg.shape[:2]
 prem = np.dstack([cg[..., :3] * cg[..., 3:4], cg[..., 3:4]]).astype(np.float32)
 # cloud-layer pixel -> reference-frame full-res pixel
@@ -208,7 +223,9 @@ for n in range(f0, f1 + 1):
             top = p[1] - cap2.shape[0] * 0.8
             op2 *= smooth((top - 0.06 * H) / (0.03 * H))
             if op2 > 0.001:
-                over(frame, cap2, p[0] - cap2.shape[1] / 2, top, op2)
+                # follow the cloud horizontally, but never past a 4% side margin
+                x2 = float(np.clip(p[0] - cap2.shape[1] / 2, 0.04 * W, W - 0.04 * W - cap2.shape[1]))
+                over(frame, cap2, x2, top, op2)
     op1 = 1 - smooth((tsec - args.cap1_end) / 0.2)
     if op1 > 0.001:
         if frame is None: frame = frame_u8.astype(np.float32) / 255; touched = True
