@@ -26,9 +26,13 @@ def grade(rgba, lo=0.36, hi=0.985, shadow=None, high=None, gamma=1.0, haze=0.10,
     L = rgb @ np.array([0.2126, 0.7152, 0.0722], np.float32)
     t = np.clip((L - lo) / (hi - lo), 0, 1) ** gamma
     out = shadow + (high - shadow) * t[..., None]
-    # keep the logo's cool tint: chroma of the render relative to its own grey
-    chroma = rgb - L[..., None]
-    out = out + chroma * 0.85
+    # below the cloud's own shadow level (the black brand letters) keep going down to black
+    below = np.clip(L / max(lo, 1e-4), 0, 1)[..., None]
+    out = np.where((L < lo)[..., None], shadow * below, out)
+    # keep the render's own colour (the brand green), scaled with the luminance remap
+    gain = (out @ np.array([0.2126, 0.7152, 0.0722], np.float32)) / np.maximum(L, 1e-3)
+    chroma = (rgb - L[..., None]) * np.minimum(gain, 1.6)[..., None]
+    out = out + chroma
     out = out * (1 - haze) + SKY_MID * haze
     a = np.clip(a * alpha_gain, 0, 1)
     if soften > 0:

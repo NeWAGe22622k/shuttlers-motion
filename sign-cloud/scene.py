@@ -15,7 +15,11 @@ ap.add_argument('--out', required=True)
 ap.add_argument('--w', type=int, default=1080)
 ap.add_argument('--h', type=int, default=1920)
 ap.add_argument('--samples', type=int, default=96)
-ap.add_argument('--logo', default='')
+ap.add_argument('--logo', default='', help='logo mask PNG: R = green coverage, G = black coverage, A = coverage')
+ap.add_argument('--logo-w', type=float, default=4.1, help='logo width on the bus side (m)')
+ap.add_argument('--logo-cx', type=float, default=3.62)
+ap.add_argument('--logo-cz', type=float, default=1.07)
+ap.add_argument('--shell', type=float, default=0.09, help='depth of the coloured skin under the cloud surface (m)')
 ap.add_argument('--windows', type=int, default=1)
 ap.add_argument('--alpha', type=int, default=1)
 ap.add_argument('--bg', type=int, default=1)
@@ -217,7 +221,7 @@ def build_gn(name, voxel, material, puff=1.0, seed=0.0, extra_union=(), extra_di
     logo_mask = None
     if logo:
         path, (x0, x1, z0, z1) = logo
-        img = bpy.data.images.load(path)
+        img = bpy.data.images.load(path); img.colorspace_settings.name = 'Non-Color'
         u = math_('MULTIPLY', math_('SUBTRACT', sep.outputs['X'], x0), 1.0 / (x1 - x0))
         v = math_('MULTIPLY', math_('SUBTRACT', sep.outputs['Z'], z0), 1.0 / (z1 - z0))
         comb = N.new('ShaderNodeCombineXYZ'); Lk.new(u, comb.inputs[0]); Lk.new(v, comb.inputs[1])
@@ -227,6 +231,11 @@ def build_gn(name, voxel, material, puff=1.0, seed=0.0, extra_union=(), extra_di
         side = math_('LESS_THAN', sep.outputs['Y'], 0.0)
         logo_mask = math_('MULTIPLY', tex.outputs['Alpha'], side)
         d = math_('MULTIPLY_ADD', logo_mask, engrave, d)
+        # colour only a thin skin under the (billowy) surface, so it reads as the cloud itself being coloured
+        shell = math_('MINIMUM', math_('MAXIMUM', math_('DIVIDE', math_('ADD', d, args.shell), 0.035), 0.0), 1.0)
+        sepc = N.new('FunctionNodeSeparateColor'); Lk.new(tex.outputs['Color'], sepc.inputs['Color'])
+        logo_g = math_('MULTIPLY', math_('MULTIPLY', sepc.outputs['Red'], side), shell)
+        logo_k = math_('MULTIPLY', math_('MULTIPLY', sepc.outputs['Green'], side), shell)
     if flat_base is not None:
         d = math_('MAXIMUM', d, math_('SUBTRACT', flat_base, sep.outputs['Z']))
 
@@ -241,23 +250,24 @@ def build_gn(name, voxel, material, puff=1.0, seed=0.0, extra_union=(), extra_di
     f2g = N.new('GeometryNodeFieldToGrid'); f2g.data_type = 'FLOAT'
     f2g.grid_items.new('FLOAT', 'density')
     if logo_mask is not None:
-        f2g.grid_items.new('FLOAT', 'logo')
+        f2g.grid_items.new('FLOAT', 'logo_g'); f2g.grid_items.new('FLOAT', 'logo_k')
     vox = N.new('GeometryNodeGridVoxelize'); vox.data_type = 'FLOAT'
     Lk.new(getd.outputs['Grid'], vox.inputs['Grid'])
     Lk.new(vox.outputs['Grid'], f2g.inputs['Topology'])
     Lk.new(dens, f2g.inputs['density'])
     if logo_mask is not None:
-        Lk.new(logo_mask, f2g.inputs['logo'])
+        Lk.new(logo_g, f2g.inputs['logo_g']); Lk.new(logo_k, f2g.inputs['logo_k'])
 
     st = N.new('GeometryNodeStoreNamedGrid'); st.data_type = 'FLOAT'
     Lk.new(getd.outputs['Volume'], st.inputs['Volume']); st.inputs['Name'].default_value = 'density'
     Lk.new(f2g.outputs['density'], st.inputs['Grid'])
     out_geo = st.outputs[0]
     if logo_mask is not None:
-        st2 = N.new('GeometryNodeStoreNamedGrid'); st2.data_type = 'FLOAT'
-        Lk.new(out_geo, st2.inputs['Volume']); st2.inputs['Name'].default_value = 'logo'
-        Lk.new(f2g.outputs['logo'], st2.inputs['Grid'])
-        out_geo = st2.outputs[0]
+        for gname in ('logo_g', 'logo_k'):
+            st2 = N.new('GeometryNodeStoreNamedGrid'); st2.data_type = 'FLOAT'
+            Lk.new(out_geo, st2.inputs['Volume']); st2.inputs['Name'].default_value = gname
+            Lk.new(f2g.outputs[gname], st2.inputs['Grid'])
+            out_geo = st2.outputs[0]
     sm = N.new('GeometryNodeSetMaterial'); sm.inputs['Material'].default_value = material
     Lk.new(out_geo, sm.inputs['Geometry'])
     Lk.new(sm.outputs[0], go.inputs[0])
@@ -274,12 +284,18 @@ def cloud_material(name, density, tint=False):
     vol.inputs['Anisotropy'].default_value = 0.3
     vol.inputs['Absorption Color'].default_value = (0.0, 0.0, 0.0, 1.0)
     if tint:
-        at = N.new('ShaderNodeAttribute'); at.attribute_name = 'logo'; at.attribute_type = 'GEOMETRY'
-        mix = N.new('ShaderNodeMix'); mix.data_type = 'RGBA'
-        Lk.new(at.outputs['Fac'], mix.inputs['Factor'])
-        mix.inputs['A'].default_value = (1, 1, 1, 1)
-        mix.inputs['B'].default_value = (0.62, 0.78, 1.0, 1)
-        Lk.new(mix.outputs['Result'], vol.inputs['Color'])
+        # brand colours as scattering albedo (linear): Shuttlers green #21E582 and black
+        ag = N.new('ShaderNodeAttribute'); ag.attribute_name = 'logo_g'; ag.attribute_type = 'GEOMETRY'
+        ak = N.new('ShaderNodeAttribute'); ak.attribute_name = 'logo_k'; ak.attribute_type = 'GEOMETRY'
+        m1 = N.new('ShaderNodeMix'); m1.data_type = 'RGBA'
+        Lk.new(ag.outputs['Fac'], m1.inputs['Factor'])
+        m1.inputs['A'].default_value = (1, 1, 1, 1)
+        m1.inputs['B'].default_value = (0.015, 0.78, 0.223, 1)
+        m2 = N.new('ShaderNodeMix'); m2.data_type = 'RGBA'
+        Lk.new(ak.outputs['Fac'], m2.inputs['Factor'])
+        Lk.new(m1.outputs['Result'], m2.inputs['A'])
+        m2.inputs['B'].default_value = (0.004, 0.004, 0.004, 1)
+        Lk.new(m2.outputs['Result'], vol.inputs['Color'])
     else:
         vol.inputs['Color'].default_value = (1, 1, 1, 1)
     Lk.new(vol.outputs['Volume'], out.inputs['Volume'])
@@ -290,9 +306,8 @@ logo = None
 if args.logo:
     from PIL import Image
     im = Image.open(args.logo); aspect = im.width / im.height
-    lh = 0.60; lw = lh * aspect
-    if lw > 5.0: lw = 5.0; lh = lw / aspect
-    cx, cz = 3.30, 1.02
+    lw = args.logo_w; lh = lw / aspect
+    cx, cz = args.logo_cx, args.logo_cz
     logo = (args.logo, (cx - lw / 2, cx + lw / 2, cz - lh / 2, cz + lh / 2))
 
 mat = cloud_material('Cloud', args.density, tint=bool(logo))

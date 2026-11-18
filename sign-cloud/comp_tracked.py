@@ -37,7 +37,8 @@ ap.add_argument('--cap2-out', type=float, default=5.75)
 ap.add_argument('--cap-size', type=float, default=0.046)
 ap.add_argument('--cap1-y', type=float, default=0.14)
 ap.add_argument('--shutter', type=float, default=0.25)
-ap.add_argument('--chroma', type=float, default=0.5, help='how much of the logo tint survives grading')
+ap.add_argument('--chroma', type=float, default=1.0, help='how much of the logo colour survives grading (1 = brand colours)')
+ap.add_argument('--cap2-gap', type=float, default=0.018, help='gap between caption 2 and the top of the cloud, fraction of height')
 ap.add_argument('--frames', default='', help='a,b: only process this frame range (preview)')
 ap.add_argument('--scale-out', type=int, default=0, help='output width (0 = source)')
 ap.add_argument('--crf', type=int, default=16)
@@ -58,7 +59,11 @@ print('source', W, H, FPS, NF)
 
 # ------------------------------------------------------------------ cloud layer (graded, premultiplied)
 c = load_rgba(args.cloud)
-L = (c[..., :3] @ np.array([0.2126, 0.7152, 0.0722], np.float32))[c[..., 3] > 0.9]
+_rgb = c[..., :3]
+_L = _rgb @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+# grade levels from the plain cloud only: opaque, neutral, not the dark brand letters
+_neutral = (c[..., 3] > 0.9) & ((_rgb.max(-1) - _rgb.min(-1)) < 0.03) & (_L > 0.42)
+L = _L[_neutral]
 scale = args.cw / c.shape[1]
 c = cv2.resize(c, (int(round(args.cw)), int(round(c.shape[0] * scale))), interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_CUBIC)
 cg = grade(c, lo=np.percentile(L, 1), hi=np.percentile(L, 99.7), gamma=1.25, haze=0.16, soften=3.5)
@@ -69,9 +74,9 @@ ch, cw_ = cg.shape[:2]
 prem = np.dstack([cg[..., :3] * cg[..., 3:4], cg[..., 3:4]]).astype(np.float32)
 # cloud-layer pixel -> reference-frame full-res pixel
 A = np.array([[1, 0, args.cx - cw_ / 2], [0, 1, args.cy - ch / 2], [0, 0, 1]], np.float64)
-# bottom-centre of the opaque part (for caption 2)
+# top-centre of the opaque part (caption 2 sits just above the cloud)
 rows = np.where(cg[..., 3].max(axis=1) > 0.3)[0]
-anchor_ref = np.array([args.cx, args.cy - ch / 2 + rows.max() + 0.012 * H, 1.0])
+anchor_ref = np.array([args.cx, args.cy - ch / 2 + rows.min() - args.cap2_gap * H, 1.0])
 
 # ------------------------------------------------------------------ tracking (tracking px -> full res)
 t = np.load(args.track)
@@ -199,7 +204,11 @@ for n in range(f0, f1 + 1):
         if op2 > 0.001:
             if frame is None: frame = frame_u8.astype(np.float32) / 255; touched = True
             p = Hk @ anchor_ref; p = p[:2] / p[2]
-            over(frame, cap2, p[0] - cap2.shape[1] / 2, p[1] - cap2.shape[0] * 0.2, op2)
+            # caption bottom edge sits on the anchor; keep it clear of the top of the frame (app UI)
+            top = p[1] - cap2.shape[0] * 0.8
+            op2 *= smooth((top - 0.06 * H) / (0.03 * H))
+            if op2 > 0.001:
+                over(frame, cap2, p[0] - cap2.shape[1] / 2, top, op2)
     op1 = 1 - smooth((tsec - args.cap1_end) / 0.2)
     if op1 > 0.001:
         if frame is None: frame = frame_u8.astype(np.float32) / 255; touched = True
