@@ -2,17 +2,19 @@
 
 Voice follows the existing Shuttlers route copy (Ads_Copy_Underutilized_Routes, Billboard copy, "Your Route Is Back in Service"): warm, short and commuter-first, with a light touch of pidgin. Spelling is "favourite" (Nigerian/British English).
 
-Route details (from the Shuttlers route flyers on Drive). **TBC rows still need pickup, destination and times.** Please also confirm the times are unchanged since the routes were paused.
+Route details (IKR131, IKR653, IKR690, ECO-SRL103 from the Shuttlers route flyers on Drive; IKR573, BDR3, YAB184 from the marketing team). Please confirm the flyer times are unchanged since the routes were paused.
 
-| Code | From → To | Morning | Evening | Source |
-| --- | --- | --- | --- | --- |
-| IKR131 | Ojota → Ikate, Lekki | 7:00 AM | 5:15 PM | Route flyer, Nov 2026 |
-| IKR573 | TBC | TBC | TBC | not on Drive |
-| IKR653 | Ojota → Sandfill, VI | 7:45 AM | 7:00 PM | Route flyer, Jun 2026 |
-| IKR690 | Ojota → Sandfill, VI | 8:00 AM | 5:30 PM | Route flyer, Oct 2026 |
-| ECO-SRL103 | Surulere → Sandfill, VI | 6:15 AM | 5:15 PM | Route flyer, Jun 2026 |
-| BDR3 | TBC | TBC | TBC | not on Drive |
-| YAB184 | TBC | TBC | TBC | not on Drive |
+| Code | From → To | Morning | Evening |
+| --- | --- | --- | --- |
+| IKR131 | Ojota → Ikate, Lekki | 7:00 AM | 5:15 PM |
+| IKR573 | Ojota → Elf Bus Stop, Lekki | 7:00 AM | 4:15 PM |
+| IKR653 | Ojota → Sandfill, VI | 7:45 AM | 7:00 PM |
+| IKR690 | Ojota → Sandfill, VI | 8:00 AM | 5:30 PM |
+| ECO-SRL103 | Surulere → Sandfill, VI | 6:15 AM | 5:15 PM |
+| BDR3 | Cooperative Villa, Badore → Oando, Marina | 5:45 AM | 5:15 PM |
+| YAB184 | Jibowu Bus Stop → Eko Hotel Roundabout | 6:30 AM | 5:30 PM |
+
+Carousel order: 01 Ikorodu Road routes → 02 Surulere, Badore & Yaba routes → 03 Same ride you missed → 04 How to book. Stories: 05 then 06.
 
 If you have a start date, add "from [DATE]" after "back on the road".
 
@@ -25,12 +27,12 @@ If you have a start date, add "from [DATE]" after "back on the road".
 > These Shuttlers routes are back on the road:
 >
 > 📍 IKR131 · Ojota → Ikate, Lekki · 7:00 AM / 5:15 PM
-> 📍 IKR573 · [FROM] → [TO] · [AM] / [PM]
+> 📍 IKR573 · Ojota → Elf Bus Stop, Lekki · 7:00 AM / 4:15 PM
 > 📍 IKR653 · Ojota → Sandfill, VI · 7:45 AM / 7:00 PM
 > 📍 IKR690 · Ojota → Sandfill, VI · 8:00 AM / 5:30 PM
 > 📍 ECO-SRL103 · Surulere → Sandfill, VI · 6:15 AM / 5:15 PM
-> 📍 BDR3 · [FROM] → [TO] · [AM] / [PM]
-> 📍 YAB184 · [FROM] → [TO] · [AM] / [PM]
+> 📍 BDR3 · Cooperative Villa, Badore → Oando, Marina · 5:45 AM / 5:15 PM
+> 📍 YAB184 · Jibowu Bus Stop → Eko Hotel Roundabout · 6:30 AM / 5:30 PM
 >
 > Same guaranteed seat. Same AC. No bus-stop wahala.
 >
@@ -38,13 +40,15 @@ If you have a start date, add "from [DATE]" after "back on the road".
 >
 > #Shuttlers #LagosCommute #MoveBetter #LagosTraffic
 
-**Alt text (slide 1):** Black graphic that reads "Your favourite route is live again." with "live again" in green. Below it, a table lists each reactivated route with its code, pickup area, destination, morning departure and evening return time.
+**Alt text (slide 1):** Black graphic that reads "Your favourite route is live again." Below it, four cards list the Ikorodu Road routes, each with its code, pickup, destination, morning departure and evening return time: IKR131 Ojota to Ikate, Lekki; IKR573 Ojota to Elf Bus Stop, Lekki; IKR653 and IKR690 Ojota to Sandfill, VI.
+
+**Alt text (slide 2):** Black graphic that reads "More routes, back on the road." Three cards list ECO-SRL103 Surulere to Sandfill, VI; BDR3 Cooperative Villa, Badore to Oando, Marina; and YAB184 Jibowu Bus Stop to Eko Hotel Roundabout, each with morning and evening times.
 
 ---
 
-## Instagram Story (05)
+## Instagram Stories (05 → 06)
 
-Sticker: **Link → "Book your seat"** (place it over or just below the green button)
+Post 05 first, then 06. On 06, add a **Link sticker → "Book your seat"** over or just below the green button.
 
 ---
 
@@ -56,7 +60,7 @@ Sticker: **Link → "Book your seat"** (place it over or just below the green bu
 >
 > Routes and times are in the image 👇 Search your code on the Shuttlers app and book your seat. 💚
 
-*(Attach slide 01; the full list with times won't fit in 280 characters.)*
+*(Attach slides 01 and 02; the full list with times won't fit in 280 characters.)*
 
 ---
 
@@ -67,12 +71,12 @@ Sticker: **Link → "Book your seat"** (place it over or just below the green bu
 > These Shuttlers routes are back on the road:
 >
 > • IKR131 · Ojota → Ikate, Lekki · 7:00 AM / 5:15 PM
-> • IKR573 · [FROM] → [TO] · [AM] / [PM]
+> • IKR573 · Ojota → Elf Bus Stop, Lekki · 7:00 AM / 4:15 PM
 > • IKR653 · Ojota → Sandfill, VI · 7:45 AM / 7:00 PM
 > • IKR690 · Ojota → Sandfill, VI · 8:00 AM / 5:30 PM
 > • ECO-SRL103 · Surulere → Sandfill, VI · 6:15 AM / 5:15 PM
-> • BDR3 · [FROM] → [TO] · [AM] / [PM]
-> • YAB184 · [FROM] → [TO] · [AM] / [PM]
+> • BDR3 · Cooperative Villa, Badore → Oando, Marina · 5:45 AM / 5:15 PM
+> • YAB184 · Jibowu Bus Stop → Eko Hotel Roundabout · 6:30 AM / 5:30 PM
 >
 > To book, open the Shuttlers app, search the route code and reserve your seat. HR and admin teams, please share this with colleagues who ride with us.
 >
