@@ -1,54 +1,69 @@
 # Route reactivation: social copy
 
-Voice follows the existing Shuttlers route copy (Ads_Copy_Underutilized_Routes, Billboard copy): warm, short and commuter-first, with a light touch of pidgin. Publicly we say the routes were **paused**, not "suspended", because it sounds softer and less operational.
+Voice follows the existing Shuttlers route copy (Ads_Copy_Underutilized_Routes, Billboard copy, "Your Route Is Back in Service"): warm, short and commuter-first, with a light touch of pidgin. Spelling is "favourite" (Nigerian/British English).
 
-Fill in `[DATE]` and `[ROUTE CODES]` before posting. If you'd rather not list codes, drop that line; the post still works.
+Replace `[DATE]` and the route lines before posting. The route list uses the same format as the Critical Routes report: `CODE  Pickup area → Destination`.
 
 ---
 
-## Instagram / Facebook (carousel: 01 → 02 → 03, optional 04)
+## Instagram / Facebook (carousel: 01 → 02 → 03)
 
-> Your route is back. 💚
+> Your favourite route is live again. 💚
 >
-> The routes we paused are back on the road from [DATE], and your seat has been waiting for you.
+> We've brought these routes back on the road from [DATE]:
 >
-> Same guaranteed seat. Same AC. Same peace of mind on your morning commute. No bus-stop wahala.
+> 📍 XXX000 · Pickup area → Destination
+> 📍 XXX000 · Pickup area → Destination
+> 📍 XXX000 · Pickup area → Destination
+> 📍 XXX000 · Pickup area → Destination
+> 📍 XXX000 · Pickup area → Destination
+> 📍 XXX000 · Pickup area → Destination
 >
-> 🚌 Open the Shuttlers app, search your route code ([ROUTE CODES]) and book your seat.
+> Same guaranteed seat. Same AC. No bus-stop wahala.
 >
-> Link in bio to get back on board.
+> 🚌 Open the Shuttlers app, search your route code and book your seat. Link in bio.
 >
 > #Shuttlers #LagosCommute #MoveBetter #LagosTraffic
 
-**Alt text (slide 1):** Black graphic that reads "Your route is back." with "back" in green. Below it, a route line goes from a dotted grey section labelled "Paused" to a solid green section labelled "Live again".
+**Alt text (slide 1):** Black graphic that reads "Your favourite route is live again." with "live again" in green. Below it is a list of reactivated route codes, each with its pickup area and destination, joined by a vertical line of green stops.
 
 ---
 
 ## Instagram Story (05)
 
-Sticker: **Link → "Book your seat"** (place it in the empty space under the CTA)
+Sticker: **Link → "Book your seat"** (place it over or just below the green button)
 
 ---
 
 ## X (Twitter)
 
-> Your route is back. 🚌
+> Your favourite route is live again. 🚌
 >
-> Routes we paused are live again from [DATE]. Search your route code on the Shuttlers app and book your seat.
+> Back from [DATE]:
+> XXX000 Pickup area → Destination
+> XXX000 Pickup area → Destination
+> XXX000 Pickup area → Destination
 >
-> Your seat has been waiting. 💚
+> Search the code on the Shuttlers app and book your seat. 💚
 
-*(Short version, 1 image: slide 01)*
+*(If the full list goes over 280 characters, post slide 01 as the image and keep the tweet to the first line plus the CTA.)*
 
 ---
 
 ## LinkedIn
 
-> Good news for your commute: routes we paused are back on the road from [DATE].
+> Your favourite route is live again.
 >
-> If one of these was your daily route, your guaranteed seat is ready again: [ROUTE CODES].
+> From [DATE], these Shuttlers routes are back on the road:
 >
-> To book, open the Shuttlers app, search your route code and reserve your seat. HR and admin teams, please share this with colleagues who ride with us.
+> • XXX000: Pickup area → Destination
+> • XXX000: Pickup area → Destination
+> • XXX000: Pickup area → Destination
+> • XXX000: Pickup area → Destination
+> • XXX000: Pickup area → Destination
+> • XXX000: Pickup area → Destination
+>
+> To book, open the Shuttlers app, search the route code and reserve your seat. HR and admin teams, please share this with colleagues who ride with us.
 >
 > Thank you for your patience while these routes were paused. We're glad to have you back on board.
 
@@ -56,15 +71,15 @@ Sticker: **Link → "Book your seat"** (place it in the empty space under the CT
 
 ## WhatsApp status / broadcast
 
-> 🚌 Your route is back!
-> Paused Shuttlers routes are live again from [DATE].
-> Search your route code on the app and book your seat 👉 [LINK]
+> 🚌 Your favourite route is live again!
+> From [DATE]: XXX000, XXX000, XXX000, XXX000, XXX000, XXX000
+> Search your route code on the Shuttlers app and book your seat 👉 [LINK]
 
 ---
 
 ## Alternate headlines (if you want to A/B)
 
+- Your favourite route is back on the road.
+- Guess who's back? Your favourite route.
 - Your seat missed you.
-- Back on the road. Back on your route.
-- We're back on your route.
 - Missed us? Your route is live again.

@@ -14,9 +14,15 @@ const OUT = join(HERE, "out");
 mkdirSync(OUT, { recursive: true });
 
 // ---- Fill these in before posting -------------------------------------------------
-// Route codes coming back. Leave as-is to keep the placeholder look; the route-list
-// slide is optional (the carousel works without it).
-const ROUTES = ["XXX000", "XXX000", "XXX000", "XXX000", "XXX000", "XXX000"];
+// Routes coming back: code, where it starts, where it ends. Up to 6 fit on the hero.
+const ROUTES = [
+  { code: "XXX000", from: "Pickup area", to: "Destination" },
+  { code: "XXX000", from: "Pickup area", to: "Destination" },
+  { code: "XXX000", from: "Pickup area", to: "Destination" },
+  { code: "XXX000", from: "Pickup area", to: "Destination" },
+  { code: "XXX000", from: "Pickup area", to: "Destination" },
+  { code: "XXX000", from: "Pickup area", to: "Destination" },
+];
 const START = "Monday, [DATE]";
 // ------------------------------------------------------------------------------------
 
@@ -50,6 +56,12 @@ const routeLine = (w = 920, live = GREEN, dim = "#3A3B3D", labelInk = "#8A8D90")
   </svg>`;
 };
 
+// Route list drawn as a line with stops: one stop per reactivated route.
+const routeList = () => `
+  <ul class="rlist">${ROUTES.map((x) => `
+    <li><i class="stop"></i><b>${x.code}</b><span>${x.from}<svg class="arr" viewBox="0 0 32 20"><path d="M2 10h26M20 3l8 7-8 7" fill="none" stroke="#8A8D90" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>${x.to}</span></li>`).join("")}
+  </ul>`;
+
 const footer = (ink, sub) => `
   <div class="foot" style="color:${ink}">
     <div class="brand">${iconSvg}</div>
@@ -63,9 +75,8 @@ const frames = [
     html: `
       <div class="pad">
         <div class="pill" style="border-color:#2A2B2D;color:${GREEN}"><i style="background:${GREEN}"></i>ROUTE UPDATE</div>
-        <h1 class="hero" style="color:#fff">Your route<br>is <em style="color:${GREEN}">back.</em></h1>
-        <p class="lede" style="color:#B9BCBE">Routes we paused are back on the road. Your seat has been waiting for you.</p>
-        <div class="routewrap">${routeLine()}</div>
+        <h1 class="hero sm" style="color:#fff">Your favourite<br>route is <em style="color:${GREEN}">live again.</em></h1>
+        ${routeList()}
       </div>
       ${footer("#fff", "#8A8D90")}`,
   },
@@ -101,26 +112,13 @@ const frames = [
       ${footer("#fff", "#8A8D90")}`,
   },
   {
-    id: "04-route-list-4x5-optional",
-    w: 1080, h: 1350, bg: GREEN,
-    html: `
-      <div class="pad">
-        <div class="kicker" style="color:${BLACK}">BACK FROM ${START.toUpperCase()}</div>
-        <h2 class="h2" style="color:${BLACK}">Back on<br>the road.</h2>
-        <div class="chips">${ROUTES.map((r) => `<span class="chip">${r}</span>`).join("")}</div>
-        <p class="note" style="color:rgba(0,0,0,.7)">Search any of these codes on the Shuttlers app to book.</p>
-      </div>
-      ${footer(BLACK, "rgba(0,0,0,.6)")}`,
-  },
-  {
     id: "05-story-9x16",
     w: 1080, h: 1920, bg: BLACK, story: true,
     html: `
       <div class="pad story">
         <div class="pill" style="border-color:#2A2B2D;color:${GREEN}"><i style="background:${GREEN}"></i>ROUTE UPDATE</div>
-        <h1 class="hero" style="color:#fff">Your route<br>is <em style="color:${GREEN}">back.</em></h1>
-        <p class="lede" style="color:#B9BCBE">Paused routes are live again. Search your route code on the app and book your seat.</p>
-        <div class="routewrap">${routeLine()}</div>
+        <h1 class="hero sm" style="color:#fff">Your favourite<br>route is <em style="color:${GREEN}">live again.</em></h1>
+        ${routeList()}
         <div class="cta" style="background:${GREEN};color:${BLACK}">Tap to book your seat</div>
       </div>
       ${footer("#fff", "#8A8D90")}`,
@@ -133,7 +131,7 @@ ${["400", "500", "600", "700", "800"].map(font).join("")}
 body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:antialiased;padding:40px;display:flex;flex-wrap:wrap;gap:40px}
 .frame{position:relative;overflow:hidden;flex:none}
 .pad{position:absolute;inset:0;padding:110px 80px 0}
-.pad.story{padding-top:260px}
+.pad.story{padding-top:220px}
 .pill{display:inline-flex;align-items:center;gap:14px;border:2px solid;border-radius:999px;padding:14px 26px;font-weight:600;font-size:24px;letter-spacing:4px}
 .pill i{width:12px;height:12px;border-radius:50%}
 .hero{font-weight:800;font-size:168px;line-height:.98;letter-spacing:-.035em;word-spacing:.1em;margin-top:64px}
@@ -151,9 +149,17 @@ body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:an
 .steps li{display:flex;align-items:center;gap:32px;color:#fff;font-size:44px;font-weight:500}
 .steps .n{width:84px;height:84px;border-radius:50%;border:3px solid #20E682;color:#20E682;display:grid;place-items:center;font-weight:700;font-size:36px;flex:none}
 .cta{display:inline-block;margin-top:84px;border-radius:999px;padding:30px 52px;font-weight:700;font-size:34px}
-.story .cta{margin-top:150px}
+.story .cta{margin-top:72px}
 .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:84px}
 .chip{background:#000;color:#20E682;border-radius:22px;padding:30px 0;text-align:center;font-weight:700;font-size:40px;letter-spacing:2px}
+.hero.sm{font-size:112px;line-height:1.02;margin-top:52px}
+.rlist{list-style:none;margin-top:64px;position:relative}
+.rlist:before{content:"";position:absolute;left:13px;top:40px;bottom:40px;width:4px;background:#2A2B2D}
+.rlist li{position:relative;display:flex;align-items:center;gap:30px;height:84px;color:#fff;font-size:34px;font-weight:500}
+.rlist .stop{width:30px;height:30px;border-radius:50%;background:#20E682;box-shadow:inset 0 0 0 9px #20E682,inset 0 0 0 30px #000;flex:none;position:relative}
+.rlist b{color:#20E682;font-weight:700;letter-spacing:1px;min-width:170px}
+.rlist span{display:flex;align-items:center}
+.rlist .arr{width:30px;height:20px;margin:0 18px}
 .note{font-size:32px;margin-top:56px;line-height:1.4}
 .foot{position:absolute;left:80px;right:80px;bottom:72px;display:flex;justify-content:space-between;align-items:center}
 .brand{display:flex;align-items:center;gap:6px;font-weight:700;font-size:40px;letter-spacing:-.02em}
