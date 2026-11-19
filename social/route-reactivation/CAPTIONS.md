@@ -2,7 +2,16 @@
 
 Voice follows the existing Shuttlers route copy (Ads_Copy_Underutilized_Routes, Billboard copy, "Your Route Is Back in Service"): warm, short and commuter-first, with a light touch of pidgin. Spelling is "favourite" (Nigerian/British English).
 
-Replace `[DATE]` and the route lines before posting. The route list uses the same format as the Critical Routes report: `CODE  Pickup area → Destination`.
+Routes are grouped by pickup area, as in the route ads sheet:
+
+| Area | Codes |
+| --- | --- |
+| Ikorodu Road | IKR131, IKR573, IKR653, IKR690 |
+| Surulere | ECO-SRL103 |
+| Badore | BDR3 |
+| Yaba | YAB184 |
+
+If you have a start date, add "from [DATE]" after "back on the road".
 
 ---
 
@@ -10,14 +19,12 @@ Replace `[DATE]` and the route lines before posting. The route list uses the sam
 
 > Your favourite route is live again. 💚
 >
-> We've brought these routes back on the road from [DATE]:
+> These Shuttlers routes are back on the road:
 >
-> 📍 XXX000 · Pickup area → Destination
-> 📍 XXX000 · Pickup area → Destination
-> 📍 XXX000 · Pickup area → Destination
-> 📍 XXX000 · Pickup area → Destination
-> 📍 XXX000 · Pickup area → Destination
-> 📍 XXX000 · Pickup area → Destination
+> 📍 Ikorodu Road: IKR131, IKR573, IKR653, IKR690
+> 📍 Surulere: ECO-SRL103
+> 📍 Badore: BDR3
+> 📍 Yaba: YAB184
 >
 > Same guaranteed seat. Same AC. No bus-stop wahala.
 >
@@ -25,7 +32,7 @@ Replace `[DATE]` and the route lines before posting. The route list uses the sam
 >
 > #Shuttlers #LagosCommute #MoveBetter #LagosTraffic
 
-**Alt text (slide 1):** Black graphic that reads "Your favourite route is live again." with "live again" in green. Below it is a list of reactivated route codes, each with its pickup area and destination, joined by a vertical line of green stops.
+**Alt text (slide 1):** Black graphic that reads "Your favourite route is live again." with "live again" in green. Below it, the reactivated route codes are grouped by area: Ikorodu Road (IKR131, IKR573, IKR653, IKR690), Surulere (ECO-SRL103), Badore (BDR3) and Yaba (YAB184).
 
 ---
 
@@ -39,14 +46,12 @@ Sticker: **Link → "Book your seat"** (place it over or just below the green bu
 
 > Your favourite route is live again. 🚌
 >
-> Back from [DATE]:
-> XXX000 Pickup area → Destination
-> XXX000 Pickup area → Destination
-> XXX000 Pickup area → Destination
+> Ikorodu Road: IKR131, IKR573, IKR653, IKR690
+> Surulere: ECO-SRL103
+> Badore: BDR3
+> Yaba: YAB184
 >
-> Search the code on the Shuttlers app and book your seat. 💚
-
-*(If the full list goes over 280 characters, post slide 01 as the image and keep the tweet to the first line plus the CTA.)*
+> Search your code on the Shuttlers app and book your seat. 💚
 
 ---
 
@@ -54,14 +59,12 @@ Sticker: **Link → "Book your seat"** (place it over or just below the green bu
 
 > Your favourite route is live again.
 >
-> From [DATE], these Shuttlers routes are back on the road:
+> These Shuttlers routes are back on the road:
 >
-> • XXX000: Pickup area → Destination
-> • XXX000: Pickup area → Destination
-> • XXX000: Pickup area → Destination
-> • XXX000: Pickup area → Destination
-> • XXX000: Pickup area → Destination
-> • XXX000: Pickup area → Destination
+> • Ikorodu Road: IKR131, IKR573, IKR653, IKR690
+> • Surulere: ECO-SRL103
+> • Badore: BDR3
+> • Yaba: YAB184
 >
 > To book, open the Shuttlers app, search the route code and reserve your seat. HR and admin teams, please share this with colleagues who ride with us.
 >
@@ -72,7 +75,7 @@ Sticker: **Link → "Book your seat"** (place it over or just below the green bu
 ## WhatsApp status / broadcast
 
 > 🚌 Your favourite route is live again!
-> From [DATE]: XXX000, XXX000, XXX000, XXX000, XXX000, XXX000
+> IKR131, IKR573, IKR653, IKR690, ECO-SRL103, BDR3, YAB184
 > Search your route code on the Shuttlers app and book your seat 👉 [LINK]
 
 ---

@@ -14,14 +14,12 @@ const OUT = join(HERE, "out");
 mkdirSync(OUT, { recursive: true });
 
 // ---- Fill these in before posting -------------------------------------------------
-// Routes coming back: code, where it starts, where it ends. Up to 6 fit on the hero.
-const ROUTES = [
-  { code: "XXX000", from: "Pickup area", to: "Destination" },
-  { code: "XXX000", from: "Pickup area", to: "Destination" },
-  { code: "XXX000", from: "Pickup area", to: "Destination" },
-  { code: "XXX000", from: "Pickup area", to: "Destination" },
-  { code: "XXX000", from: "Pickup area", to: "Destination" },
-  { code: "XXX000", from: "Pickup area", to: "Destination" },
+// Routes coming back, grouped by pickup area (as in the route ads sheet).
+const GROUPS = [
+  { area: "Ikorodu Road", codes: ["IKR131", "IKR573", "IKR653", "IKR690"] },
+  { area: "Surulere", codes: ["ECO-SRL103"] },
+  { area: "Badore", codes: ["BDR3"] },
+  { area: "Yaba", codes: ["YAB184"] },
 ];
 const START = "Monday, [DATE]";
 // ------------------------------------------------------------------------------------
@@ -58,8 +56,8 @@ const routeLine = (w = 920, live = GREEN, dim = "#3A3B3D", labelInk = "#8A8D90")
 
 // Route list drawn as a line with stops: one stop per reactivated route.
 const routeList = () => `
-  <ul class="rlist">${ROUTES.map((x) => `
-    <li><i class="stop"></i><b>${x.code}</b><span>${x.from}<svg class="arr" viewBox="0 0 32 20"><path d="M2 10h26M20 3l8 7-8 7" fill="none" stroke="#8A8D90" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>${x.to}</span></li>`).join("")}
+  <ul class="rlist">${GROUPS.map((g) => `
+    <li><i class="stop"></i><div><span class="area">${g.area}</span><span class="codes">${g.codes.join('<i class="sep"></i>')}</span></div></li>`).join("")}
   </ul>`;
 
 const footer = (ink, sub) => `
@@ -130,7 +128,7 @@ ${["400", "500", "600", "700", "800"].map(font).join("")}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:antialiased;padding:40px;display:flex;flex-wrap:wrap;gap:40px}
 .frame{position:relative;overflow:hidden;flex:none}
-.pad{position:absolute;inset:0;padding:110px 80px 0}
+.pad{position:absolute;inset:0;padding:96px 80px 0}
 .pad.story{padding-top:220px}
 .pill{display:inline-flex;align-items:center;gap:14px;border:2px solid;border-radius:999px;padding:14px 26px;font-weight:600;font-size:24px;letter-spacing:4px}
 .pill i{width:12px;height:12px;border-radius:50%}
@@ -152,14 +150,15 @@ body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:an
 .story .cta{margin-top:72px}
 .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:84px}
 .chip{background:#000;color:#20E682;border-radius:22px;padding:30px 0;text-align:center;font-weight:700;font-size:40px;letter-spacing:2px}
-.hero.sm{font-size:112px;line-height:1.02;margin-top:52px}
-.rlist{list-style:none;margin-top:64px;position:relative}
-.rlist:before{content:"";position:absolute;left:13px;top:40px;bottom:40px;width:4px;background:#2A2B2D}
-.rlist li{position:relative;display:flex;align-items:center;gap:30px;height:84px;color:#fff;font-size:34px;font-weight:500}
-.rlist .stop{width:30px;height:30px;border-radius:50%;background:#20E682;box-shadow:inset 0 0 0 9px #20E682,inset 0 0 0 30px #000;flex:none;position:relative}
-.rlist b{color:#20E682;font-weight:700;letter-spacing:1px;min-width:170px}
-.rlist span{display:flex;align-items:center}
-.rlist .arr{width:30px;height:20px;margin:0 18px}
+.hero.sm{font-size:112px;line-height:1.02;margin-top:44px}
+.rlist{list-style:none;margin-top:56px;position:relative}
+.rlist:before{content:"";position:absolute;left:13px;top:24px;bottom:60px;width:4px;background:#2A2B2D}
+.rlist li{position:relative;display:flex;align-items:flex-start;gap:34px;padding:0 0 40px}
+.rlist li:last-child{padding-bottom:0}
+.rlist .stop{width:30px;height:30px;border-radius:50%;box-shadow:inset 0 0 0 9px #20E682,inset 0 0 0 30px #000;flex:none;margin-top:6px;position:relative}
+.rlist .area{display:block;color:#B9BCBE;font-size:28px;font-weight:500;letter-spacing:.5px}
+.rlist .codes{display:flex;align-items:center;flex-wrap:wrap;color:#20E682;font-size:46px;font-weight:700;letter-spacing:1px;line-height:1.2;margin-top:2px}
+.rlist .sep{width:10px;height:10px;border-radius:50%;background:#3A3B3D;margin:0 22px}
 .note{font-size:32px;margin-top:56px;line-height:1.4}
 .foot{position:absolute;left:80px;right:80px;bottom:72px;display:flex;justify-content:space-between;align-items:center}
 .brand{display:flex;align-items:center;gap:6px;font-weight:700;font-size:40px;letter-spacing:-.02em}
