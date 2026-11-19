@@ -14,12 +14,18 @@ const OUT = join(HERE, "out");
 mkdirSync(OUT, { recursive: true });
 
 // ---- Fill these in before posting -------------------------------------------------
-// Routes coming back, grouped by pickup area (as in the route ads sheet).
-const GROUPS = [
-  { area: "Ikorodu Road", codes: ["IKR131", "IKR573", "IKR653", "IKR690"] },
-  { area: "Surulere", codes: ["ECO-SRL103"] },
-  { area: "Badore", codes: ["BDR3"] },
-  { area: "Yaba", codes: ["YAB184"] },
+// Routes coming back: code, A → B, morning departure, evening return.
+// Sources: Shuttlers route flyers on Drive (IKR131 Nov 2026, IKR690 Oct 2026,
+// IKR653 + ECO-SRL103 Jun 2026). TBC = not found on Drive yet.
+const TBC = "TBC";
+const ROUTES = [
+  { code: "IKR131", from: "Ojota", to: "Ikate, Lekki", am: "7:00 AM", pm: "5:15 PM" },
+  { code: "IKR573", from: TBC, to: TBC, am: TBC, pm: TBC },
+  { code: "IKR653", from: "Ojota", to: "Sandfill, VI", am: "7:45 AM", pm: "7:00 PM" },
+  { code: "IKR690", from: "Ojota", to: "Sandfill, VI", am: "8:00 AM", pm: "5:30 PM" },
+  { code: "ECO-SRL103", from: "Surulere", to: "Sandfill, VI", am: "6:15 AM", pm: "5:15 PM" },
+  { code: "BDR3", from: TBC, to: TBC, am: TBC, pm: TBC },
+  { code: "YAB184", from: TBC, to: TBC, am: TBC, pm: TBC },
 ];
 const START = "Monday, [DATE]";
 // ------------------------------------------------------------------------------------
@@ -55,9 +61,15 @@ const routeLine = (w = 920, live = GREEN, dim = "#3A3B3D", labelInk = "#8A8D90")
 };
 
 // Route list drawn as a line with stops: one stop per reactivated route.
+const arrow = `<svg class="arr" viewBox="0 0 32 20"><path d="M2 10h26M20 3l8 7-8 7" fill="none" stroke="#8A8D90" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const t = (v) => (v === TBC ? `<span class="tbc">${v}</span>` : v);
 const routeList = () => `
-  <ul class="rlist">${GROUPS.map((g) => `
-    <li><i class="stop"></i><div><span class="area">${g.area}</span><span class="codes">${g.codes.join('<i class="sep"></i>')}</span></div></li>`).join("")}
+  <div class="rhead"><span>ROUTE</span><span>MORNING</span><span>EVENING</span></div>
+  <ul class="rlist">${ROUTES.map((r) => `
+    <li><i class="stop"></i>
+      <div class="rmain"><b>${r.code}</b><span class="ab">${r.from === TBC ? t(TBC) : `${r.from}${arrow}${r.to}`}</span></div>
+      <span class="time">${t(r.am)}</span><span class="time">${t(r.pm)}</span>
+    </li>`).join("")}
   </ul>`;
 
 const footer = (ink, sub) => `
@@ -73,7 +85,7 @@ const frames = [
     html: `
       <div class="pad">
         <div class="pill" style="border-color:#2A2B2D;color:${GREEN}"><i style="background:${GREEN}"></i>ROUTE UPDATE</div>
-        <h1 class="hero sm" style="color:#fff">Your favourite<br>route is <em style="color:${GREEN}">live again.</em></h1>
+        <h1 class="hero sm" style="color:#fff">Your favourite route<br>is <em style="color:${GREEN}">live again.</em></h1>
         ${routeList()}
       </div>
       ${footer("#fff", "#8A8D90")}`,
@@ -115,7 +127,7 @@ const frames = [
     html: `
       <div class="pad story">
         <div class="pill" style="border-color:#2A2B2D;color:${GREEN}"><i style="background:${GREEN}"></i>ROUTE UPDATE</div>
-        <h1 class="hero sm" style="color:#fff">Your favourite<br>route is <em style="color:${GREEN}">live again.</em></h1>
+        <h1 class="hero sm" style="color:#fff">Your favourite route<br>is <em style="color:${GREEN}">live again.</em></h1>
         ${routeList()}
         <div class="cta" style="background:${GREEN};color:${BLACK}">Tap to book your seat</div>
       </div>
@@ -128,7 +140,7 @@ ${["400", "500", "600", "700", "800"].map(font).join("")}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:antialiased;padding:40px;display:flex;flex-wrap:wrap;gap:40px}
 .frame{position:relative;overflow:hidden;flex:none}
-.pad{position:absolute;inset:0;padding:96px 80px 0}
+.pad{position:absolute;inset:0;padding:88px 80px 0}
 .pad.story{padding-top:220px}
 .pill{display:inline-flex;align-items:center;gap:14px;border:2px solid;border-radius:999px;padding:14px 26px;font-weight:600;font-size:24px;letter-spacing:4px}
 .pill i{width:12px;height:12px;border-radius:50%}
@@ -138,7 +150,7 @@ body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:an
 .routewrap{margin-top:96px}
 .story .routewrap{margin-top:140px}
 .kicker{font-weight:700;font-size:24px;letter-spacing:4px}
-.h2{font-weight:800;font-size:128px;line-height:1;letter-spacing:-.035em;word-spacing:.1em;margin-top:40px}
+.h2{font-weight:800;font-size:104px;line-height:1;letter-spacing:-.035em;word-spacing:.1em;margin-top:40px}
 .list{list-style:none;margin-top:84px;display:flex;flex-direction:column;gap:0}
 .list li{display:flex;gap:36px;align-items:baseline;padding:34px 0;border-top:3px solid rgba(0,0,0,.85);font-size:40px;line-height:1.3;font-weight:500}
 .list li:last-child{border-bottom:3px solid rgba(0,0,0,.85)}
@@ -150,15 +162,19 @@ body{background:#1a1a1a;font-family:Poppins,sans-serif;-webkit-font-smoothing:an
 .story .cta{margin-top:72px}
 .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:84px}
 .chip{background:#000;color:#20E682;border-radius:22px;padding:30px 0;text-align:center;font-weight:700;font-size:40px;letter-spacing:2px}
-.hero.sm{font-size:112px;line-height:1.02;margin-top:44px}
-.rlist{list-style:none;margin-top:56px;position:relative}
-.rlist:before{content:"";position:absolute;left:13px;top:24px;bottom:60px;width:4px;background:#2A2B2D}
-.rlist li{position:relative;display:flex;align-items:flex-start;gap:34px;padding:0 0 40px}
-.rlist li:last-child{padding-bottom:0}
-.rlist .stop{width:30px;height:30px;border-radius:50%;box-shadow:inset 0 0 0 9px #20E682,inset 0 0 0 30px #000;flex:none;margin-top:6px;position:relative}
-.rlist .area{display:block;color:#B9BCBE;font-size:28px;font-weight:500;letter-spacing:.5px}
-.rlist .codes{display:flex;align-items:center;flex-wrap:wrap;color:#20E682;font-size:46px;font-weight:700;letter-spacing:1px;line-height:1.2;margin-top:2px}
-.rlist .sep{width:10px;height:10px;border-radius:50%;background:#3A3B3D;margin:0 22px}
+.hero.sm{font-size:72px;line-height:1.05;letter-spacing:-.03em;margin-top:36px}
+.rhead{display:grid;grid-template-columns:1fr 150px 150px;padding-left:62px;margin-top:48px;color:#8A8D90;font-weight:600;font-size:18px;letter-spacing:3px}
+.rhead span:not(:first-child){text-align:right}
+.rlist{list-style:none;margin-top:14px;position:relative}
+.rlist:before{content:"";position:absolute;left:11px;top:40px;bottom:40px;width:4px;background:#2A2B2D}
+.rlist li{display:grid;grid-template-columns:26px 1fr 150px 150px;column-gap:36px;align-items:center;padding:13px 0;border-top:1px solid #1E1F21;position:relative}
+.rlist li{column-gap:0}.rlist .rmain{padding-left:36px}
+.rlist .stop{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 8px #20E682,inset 0 0 0 26px #000;position:relative;z-index:1}
+.rlist b{display:block;color:#20E682;font-weight:700;font-size:30px;letter-spacing:.5px;line-height:1.2}
+.rlist .ab{display:flex;align-items:center;color:#fff;font-size:26px;font-weight:500;line-height:1.3;margin-top:2px}
+.rlist .arr{width:24px;height:16px;margin:0 12px;flex:none}
+.rlist .time{text-align:right;color:#fff;font-size:26px;font-weight:600}
+.rlist .tbc{color:#5E6163;font-weight:500}
 .note{font-size:32px;margin-top:56px;line-height:1.4}
 .foot{position:absolute;left:80px;right:80px;bottom:72px;display:flex;justify-content:space-between;align-items:center}
 .brand{display:flex;align-items:center;gap:6px;font-weight:700;font-size:40px;letter-spacing:-.02em}
